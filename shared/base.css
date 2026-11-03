@@ -1,0 +1,59 @@
+/* Shared base: 1920x1080 stage, layers, toast, focus nudges. Versions style everything else. */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; cursor: default; user-select: none; }
+button { font: inherit; color: inherit; background: none; border: 0; text-align: inherit; cursor: pointer; outline: none; }
+
+#stage {
+  position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px;
+  transform-origin: 50% 50%; overflow: hidden; contain: strict;
+  opacity: 0; transition: opacity .25s ease;
+}
+body.ready #stage { opacity: 1; }
+
+.layer { position: absolute; inset: 0; z-index: 50; visibility: hidden; opacity: 0; transition: opacity .32s ease, visibility 0s linear .32s; }
+.layer.open { visibility: visible; opacity: 1; transition: opacity .32s ease; }
+.athan-layer { z-index: 90; }
+
+.toast {
+  position: absolute; left: 50%; bottom: 72px; z-index: 80; display: flex; align-items: center; gap: 14px;
+  padding: 18px 30px; border-radius: 999px; font-size: 24px;
+  transform: translate(-50%, 24px); opacity: 0; transition: transform .38s cubic-bezier(.2,.8,.2,1), opacity .25s ease;
+}
+.toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+/* edge bump when nothing lies in that direction */
+@keyframes bumpL { 40% { translate: -10px 0; } } @keyframes bumpR { 40% { translate: 10px 0; } }
+@keyframes bumpU { 40% { translate: 0 -10px; } } @keyframes bumpD { 40% { translate: 0 10px; } }
+.bump-l { animation: bumpL .26s ease; } .bump-r { animation: bumpR .26s ease; }
+.bump-u { animation: bumpU .26s ease; } .bump-d { animation: bumpD .26s ease; }
+.nudge-l .set-text { animation: bumpL .22s ease; } .nudge-r .set-text { animation: bumpR .22s ease; }
+
+/* athan rings: expanding circles, transform + opacity only */
+.athan-rings { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.athan-rings i { position: absolute; left: -260px; top: -260px; width: 520px; height: 520px; border-radius: 50%; opacity: 0; }
+.athan-layer.open .athan-rings i { animation: ring 4.5s cubic-bezier(.2,.6,.3,1) infinite; }
+.athan-layer.open .athan-rings i:nth-child(2) { animation-delay: 1.5s; }
+.athan-layer.open .athan-rings i:nth-child(3) { animation-delay: 3s; }
+@keyframes ring { 0% { transform: scale(.55); opacity: 0; } 15% { opacity: .55; } 100% { transform: scale(2.6); opacity: 0; } }
+.athan-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+
+.settings-layer .settings-panel { transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* live wallpaper */
+.wall { position: absolute; inset: 0; overflow: hidden; }
+.wall canvas { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 1.2s ease; }
+.photos { position: absolute; inset: 0; }
+.sky-photo { position: absolute; inset: -3%; background: center/cover no-repeat; opacity: 0; transition: opacity 2s ease; animation: kenburns 60s ease-in-out infinite alternate; }
+.sky-photo.in { opacity: 1; }
+@keyframes kenburns { to { transform: scale(1.06) translate3d(-1%, -1%, 0); } }
+.sky-label { position: absolute; left: 50%; top: 28px; z-index: 70; transform: translate(-50%, -20px); opacity: 0; display: flex; gap: 14px; align-items: center;
+  padding: 12px 22px; border-radius: 999px; background: rgba(8,10,20,.62); color: #fff; font-size: 20px; font-variant-numeric: tabular-nums; transition: transform .4s cubic-bezier(.32,.72,0,1), opacity .3s; }
+.sky-label.show { transform: translate(-50%, 0); opacity: 1; }
+.sky-label b { font-weight: 600; letter-spacing: .04em; }
+.sky-label span { opacity: .55; font-size: 16px; }
+
+.athan-progress { width: 420px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.16); margin-top: 44px; overflow: hidden; }
+.athan-progress i { display: block; height: 100%; background: currentColor; transform-origin: 0 50%; transform: scaleX(0); transition: transform .3s linear; }

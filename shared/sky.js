@@ -1,0 +1,491 @@
+/* Live wallpaper: a painted landscape whose sky follows the real sun and moon for your location.
+   Dawn, sunrise, morning, noon, afternoon, golden hour, sunset, dusk, night — all blended continuously.
+   Static layers are cached and re-painted every few seconds; only stars, clouds, sun, moon and birds move per frame (30 fps).
+   Photo mode: drop wallpapers/<phase>.jpg (dawn, sunrise, morning, noon, afternoon, sunset, dusk, night) and they take over.
+   Keys: T = time-lapse a whole day in one minute. */
+window.TV = window.TV || {};
+
+(function () {
+  const W = 1920, H = 1080, R = Math.PI / 180;
+  let cv, ctx, scene = 'dunes', sky = null, landCache, skyCache, lastSky = 0, lastLand = 0, t0 = performance.now();
+  let lapse = null; // { real: ms, virt: ms, rate }
+  let mode = 'live', dirty = true;
+  const SKY = .5; // sky render scale
+  const showCanvas = v => { cv.style.opacity = v; landCache.style.opacity = v; };
+  const FRAME = window.Horizon ? 50 : 32;
+  let busyUntil = 0;
+  document.addEventListener('keydown', () => { busyUntil = performance.now() + 650; }, true);
+
+  /* ---------- utils ---------- */
+  const rng = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  const css = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const smooth = t => t * t * (3 - 2 * t);
+
+  /* ---------- astronomy ---------- */
+  function sunMoon(date, lat, lng) {
+    const d = date.getTime() / 864e5 - 10957.5;
+    const e = (23.439 - 0.00000036 * d) * R;
+    const g = (357.529 + 0.98560028 * d) * R, q = 280.459 + 0.98564736 * d;
+    const sunLon = (q + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * R;
+    const gmst = (280.46061837 + 360.98564736629 * d) % 360;
+    const altAz = (ra, dec) => {
+      const H = (gmst + lng) * R - ra, la = lat * R;
+      const alt = Math.asin(Math.sin(la) * Math.sin(dec) + Math.cos(la) * Math.cos(dec) * Math.cos(H));
+      const az = Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(la) - Math.tan(dec) * Math.cos(la)) + Math.PI;
+      return { alt: alt / R, az: ((az / R) % 360 + 360) % 360 };
+    };
+    const eq = (lon, b) => ({
+      ra: Math.atan2(Math.sin(lon) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(lon)),
+      dec: Math.asin(Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(lon)),
+    });
+    const s = eq(sunLon, 0);
+    const L = (218.316 + 13.176396 * d) * R, M = (134.963 + 13.064993 * d) * R, F = (93.272 + 13.229350 * d) * R;
+    const moonLon = L + 6.289 * R * Math.sin(M), moonLat = 5.128 * R * Math.sin(F);
+    const m = eq(moonLon, moonLat);
+    const elong = moonLon - sunLon;
+    return { sun: altAz(s.ra, s.dec), moon: altAz(m.ra, m.dec), phase: (1 - Math.cos(elong)) / 2, waxing: Math.sin(elong) > 0 };
+  }
+
+  /* ---------- sky palettes keyed by sun altitude (z=zenith u=upper h=horizon g=sun glow n=near land s=stars) ---------- */
+  const K = (a, z, u, h, g, n, s) => ({ a, z: hex(z), u: hex(u), h: hex(h), g: hex(g), n: hex(n), s });
+  const MORNING = [
+    K(-18, '#040817', '#0c1634', '#22305c', '#2a3a70', '#05070f', 1),
+    K(-12, '#07102a', '#13224c', '#2e3d72', '#3a4a86', '#070a18', .85),
+    K(-7,  '#0f1a42', '#2a3a78', '#7a6aa0', '#a07ab0', '#0d1030', .45),
+    K(-3,  '#1d3170', '#4f63a8', '#e3a3a8', '#ffb490', '#1e1838', .1),
+    K(0,   '#2f4a90', '#7a8fc8', '#ffc9a0', '#ffd2a0', '#2a2440', 0),
+    K(4,   '#3b62b0', '#8eaedc', '#ffe2c0', '#fff0d8', '#2c3448', 0),
+    K(12,  '#3a70c4', '#86b4e8', '#dceaf5', '#ffffff', '#263a50', 0),
+    K(30,  '#2b68cc', '#6aa6ee', '#c4def4', '#ffffff', '#22394f', 0),
+    K(60,  '#2260cc', '#5c9cea', '#b6d6f2', '#ffffff', '#1f364c', 0),
+  ];
+  const EVENING = [
+    MORNING[0],
+    K(-12, '#08102a', '#182050', '#3a2e66', '#4a3670', '#08081a', .85),
+    K(-7,  '#141a48', '#3b2f6e', '#b0507a', '#d0607a', '#140f2c', .45),
+    K(-3,  '#232f6c', '#6a4a8a', '#ff7a5a', '#ff6a40', '#24142c', .1),
+    K(0,   '#2d3f80', '#8a6a9a', '#ff9a5a', '#ff8a3a', '#2e1a2c', 0),
+    K(4,   '#3a5aa4', '#a08cb0', '#ffc080', '#ffb050', '#33283a', 0),
+    K(12,  '#3a6cbc', '#8ab0e0', '#f0dcc0', '#fff0d0', '#2a3548', 0),
+    MORNING[7], MORNING[8],
+  ];
+  function palette(alt, evening) {
+    const sample = keys => {
+      if (alt <= keys[0].a) return keys[0];
+      for (let i = 1; i < keys.length; i++) if (alt <= keys[i].a) {
+        const A = keys[i - 1], B = keys[i], t = smooth((alt - A.a) / (B.a - A.a));
+        return { z: mix(A.z, B.z, t), u: mix(A.u, B.u, t), h: mix(A.h, B.h, t), g: mix(A.g, B.g, t), n: mix(A.n, B.n, t), s: A.s + (B.s - A.s) * t };
+      }
+      return keys[keys.length - 1];
+    };
+    const m = sample(MORNING), e = sample(EVENING), t = evening;
+    return { z: mix(m.z, e.z, t), u: mix(m.u, e.u, t), h: mix(m.h, e.h, t), g: mix(m.g, e.g, t), n: mix(m.n, e.n, t), s: m.s + (e.s - m.s) * t };
+  }
+
+  function phaseOf(alt, evening) {
+    if (alt < -12) return 'night';
+    if (!evening) return alt < -4 ? 'dawn' : alt < 6 ? 'sunrise' : alt < 30 ? 'morning' : 'noon';
+    return alt < -4 ? 'dusk' : alt < 2 ? 'sunset' : alt < 12 ? 'golden' : alt < 30 ? 'afternoon' : 'noon';
+  }
+
+  /* ---------- noise for terrain ---------- */
+  function noise(seed) {
+    const r = rng(seed), v = Array.from({ length: 512 }, r);
+    const n = x => { const i = Math.floor(x), f = x - i, a = v[i & 511], b = v[(i + 1) & 511]; return a + (b - a) * smooth(f); };
+    return (x, oct = 4, ridged = false) => { let s = 0, amp = .5, fr = 1; for (let o = 0; o < oct; o++) { let k = n(x * fr + o * 31.7); if (ridged) k = 1 - Math.abs(k * 2 - 1); s += k * amp; amp *= .5; fr *= 2.03; } return s; };
+  }
+  const line = (f, step = 6) => { const p = []; for (let x = -20; x <= W + 20; x += step) p.push([x, f(x)]); return p; };
+  function fillLine(c, pts, color, bottom = H) {
+    c.beginPath(); c.moveTo(pts[0][0], bottom);
+    for (const [x, y] of pts) c.lineTo(x, y);
+    c.lineTo(pts[pts.length - 1][0], bottom); c.closePath(); c.fillStyle = color; c.fill();
+  }
+
+  /* ---------- silhouettes ---------- */
+  function mosque(c, x, gy, s, color) {
+    c.fillStyle = color; c.save(); c.translate(x, gy); c.scale(s, s);
+    c.fillRect(-130, -64, 260, 64);                       // prayer hall
+    c.fillRect(-60, -92, 120, 30);                         // drum
+    c.beginPath(); c.moveTo(-58, -92); c.bezierCurveTo(-60, -150, -8, -170, 0, -192); c.bezierCurveTo(8, -170, 60, -150, 58, -92); c.fill(); // onion dome
+    c.fillRect(-1.5, -212, 3, 22); c.beginPath(); c.arc(0, -214, 5, 0, 7); c.fill();
+    for (const dx of [-100, 100]) { c.beginPath(); c.arc(dx, -64, 22, Math.PI, 0); c.fill(); }
+    // square Maghrebi minaret
+    c.fillRect(150, -300, 46, 300); c.fillRect(144, -308, 58, 12);
+    c.fillRect(158, -352, 30, 44); c.beginPath(); c.arc(173, -352, 15, Math.PI, 0); c.fill();
+    c.fillRect(171.5, -388, 3, 22); c.beginPath(); c.arc(173, -392, 4, 0, 7); c.fill();
+    c.restore();
+  }
+  function palm(c, x, gy, h, lean, color) {
+    c.strokeStyle = color; c.fillStyle = color; c.lineCap = 'round';
+    const tx = x + lean, ty = gy - h;
+    c.lineWidth = h * .045; c.beginPath(); c.moveTo(x, gy); c.quadraticCurveTo(x + lean * .2, gy - h * .5, tx, ty); c.stroke();
+    for (let i = 0; i < 9; i++) {
+      const a = -Math.PI / 2 + (i - 4) * .38 + (i % 2 ? .1 : -.1), len = h * (.42 + (i % 3) * .07);
+      const ex = tx + Math.cos(a) * len, ey = ty + Math.sin(a) * len * .55 + len * .32;
+      c.lineWidth = h * .02;
+      c.beginPath(); c.moveTo(tx, ty); c.quadraticCurveTo(tx + Math.cos(a) * len * .5, ty + Math.sin(a) * len * .5 - h * .05, ex, ey); c.stroke();
+      c.beginPath(); c.moveTo(tx, ty); c.quadraticCurveTo(tx + Math.cos(a) * len * .55, ty + Math.sin(a) * len * .55 + h * .02, ex, ey); c.lineTo(ex, ey); c.stroke();
+    }
+  }
+
+  /* ---------- scenes: each paints layers far→near, colored from horizon → near (atmospheric perspective) ---------- */
+  const SCENES = {
+    dunes: { name: 'Sahara', horizon: 700, paint(c, p, night) {
+      const n1 = noise(7), sand = hex('#b0683a');
+      const day = clamp(1 - night * 1.4, 0, 1);
+      const near = mix(p.n, sand, .55 * day);
+      const col = k => css(mix(p.h, near, k));
+      const dune = (y0, amp, per, ph, sk) => x => { const t = ((x / per + ph) % 1 + 1) % 1; const crest = t < sk ? Math.pow(t / sk, 1.6) : Math.pow((1 - t) / (1 - sk), 1.1); return y0 - amp * crest - n1(x / 300) * amp * .3; };
+      fillLine(c, line(dune(700, 70, 900, .1, .7)), col(.28));
+      mosque(c, 1020, 668, .58, col(.42));
+      palm(c, 860, 676, 120, 10, col(.42)); palm(c, 900, 680, 90, -12, col(.42)); palm(c, 1240, 676, 105, -8, col(.42));
+      fillLine(c, line(dune(790, 110, 1300, .45, .65)), col(.55));
+      fillLine(c, line(dune(900, 140, 1700, .8, .6)), col(.78));
+      fillLine(c, line(dune(1010, 150, 2300, .25, .72)), col(1));
+      palm(c, 160, 1000, 330, 40, col(1)); palm(c, 300, 1010, 230, -30, col(1));
+    } },
+    atlas: { name: 'Atlas lake', horizon: 640, water: 760, paint(c, p, night) {
+      const n1 = noise(21), n2 = noise(5), n3 = noise(13);
+      const day = clamp(1 - night * 1.4, 0, 1);
+      const near = mix(p.n, hex('#1f4a42'), .55 * day);
+      const haze = mix(p.h, mix(p.u, hex('#7aa0c8'), .4), .55 * day);
+      const col = k => css(mix(haze, near, k));
+      // far range: peaks catch the light, valleys sink into haze
+      const far = line(x => 640 - 270 * n1(x / 520, 5, true) + 50);
+      const gr = c.createLinearGradient(0, 380, 0, 700);
+      gr.addColorStop(0, css(mix(mix(haze, near, .2), mix(p.g, [255, 255, 255], .5), .22 * day + .12)));
+      gr.addColorStop(1, col(.3));
+      fillLine(c, far, gr, 762);
+      fillLine(c, line(x => 720 - 150 * n2(x / 380, 4, true) + 24), col(.52), 762);
+      mosque(c, 1010, 764, .5, col(.68));
+      palm(c, 880, 764, 90, 8, col(.68)); palm(c, 1150, 764, 76, -8, col(.68));
+      fillLine(c, line(x => 763 - 10 * n3(x / 90)), col(.68), 766);
+    }, fore(c, p) {
+      const col = css(mix(p.h, p.n, 1));
+      const n4 = noise(3);
+      fillLine(c, line(x => x < 700 ? 930 + (x / 700) ** 2 * 200 - 50 * n4(x / 160) : 1200), col);
+      palm(c, 560, 990, 250, 30, col); palm(c, 80, 950, 300, -20, col); palm(c, 300, 960, 200, 14, col);
+      fillLine(c, line(x => x > 1360 ? 1080 - ((x - 1360) / 560) * 130 - 40 * n4(x / 120) : 1200), col);
+      palm(c, 1800, 975, 270, -40, col);
+    } },
+    coast: { name: 'Essaouira coast', horizon: 704, water: 704, paint(c, p, night, lights) {
+      const n1 = noise(31), r = rng(8);
+      const col = k => css(mix(p.h, p.n, k));
+      fillLine(c, line(x => x > 1180 && x < 1560 ? 704 - 46 * Math.sin((x - 1180) / 380 * Math.PI) * (.8 + .2 * n1(x / 40)) : 760), col(.35), 706); // Mogador island
+      // ramparts on the promontory, left
+      c.fillStyle = col(.62);
+      c.beginPath(); c.moveTo(-20, 1080); c.lineTo(-20, 650); c.lineTo(560, 650); c.lineTo(700, 720); c.lineTo(760, 1080); c.fill();
+      for (let x = -10; x < 560; x += 18) c.fillRect(x, 640, 10, 12);
+      for (const [x, h] of [[60, 70], [250, 54], [430, 80]]) { c.fillRect(x, 650 - h, 70, h + 2); for (let i = 0; i < 70; i += 16) c.fillRect(x + i, 650 - h - 10, 9, 10); }
+      c.fillRect(300, 470, 38, 182); c.fillRect(294, 462, 50, 10); c.fillRect(306, 432, 26, 32); c.beginPath(); c.arc(319, 432, 13, Math.PI, 0); c.fill();
+      for (let i = 0; i < 26; i++) lights.push([20 + r() * 520, 670 + r() * 60, 5, 6, .4 + r() * .6]);
+      palm(c, 640, 724, 150, 18, col(.62));
+    }, fore(c, p) {
+      const col = css(mix(p.h, p.n, 1)), n4 = noise(17);
+      fillLine(c, line(x => x > 1320 ? 1080 - ((x - 1320) / 600) * 240 - 60 * n4(x / 70) : 1300), col);
+      fillLine(c, line(x => x < 520 ? 1000 + (x / 520) * 90 - 40 * n4(x / 50 + 9) : 1300), col);
+    } },
+    hills: { name: 'Rolling hills', horizon: 720, paint(c, p, night) {
+      const n1 = noise(44), n2 = noise(45), n3 = noise(46), n4 = noise(47);
+      const day = clamp(1 - night * 1.4, 0, 1);
+      const near = mix(p.n, hex('#2f5a2a'), .78 * day);
+      const haze = mix(p.h, mix(p.u, hex('#8fb4d8'), .4), .5 * day);
+      const col = k => css(mix(haze, near, k));
+      fillLine(c, line(x => 690 - 70 * n1(x / 700)), col(.3));
+      mosque(c, 1380, 668, .34, col(.25));
+      fillLine(c, line(x => 760 - 90 * n2(x / 520)), col(.48));
+      fillLine(c, line(x => 860 - 110 * n3(x / 460)), col(.72));
+      const ground = x => 980 - 120 * n4(x / 380);
+      fillLine(c, line(ground), col(1));
+      // a lone tree on the near crest
+      const tx = 1500, ty = ground(tx) + 4; c.fillStyle = col(1); c.strokeStyle = col(1);
+      c.lineWidth = 12; c.beginPath(); c.moveTo(tx, ty); c.lineTo(tx + 4, ty - 120); c.stroke();
+      for (const [dx, dy, rr] of [[0, -150, 70], [-60, -120, 52], [60, -118, 56], [-30, -190, 50], [36, -186, 48]]) { c.beginPath(); c.arc(tx + dx, ty + dy, rr, 0, 7); c.fill(); }
+    } },
+    medina: { name: 'Medina', horizon: 770, paint(c, p, night, lights) {
+      const r = rng(42), n1 = noise(9);
+      const col = k => css(mix(p.h, p.n, k));
+      fillLine(c, line(x => 700 - 90 * n1(x / 600, 3)), col(.22));
+      const row = (base, minH, maxH, k, lit) => {
+        let x = -30; c.fillStyle = col(k);
+        while (x < W + 30) {
+          const w = 40 + r() * 90, h = minH + r() * (maxH - minH);
+          c.fillRect(x, base - h, w + 1, h + 200);
+          if (r() < .35) for (let i = 0; i < w; i += 12) c.fillRect(x + i, base - h - 6, 6, 6); // crenellation
+          if (lit) for (let wy = base - h + 14; wy < base - 10; wy += 22) for (let wx = x + 8; wx < x + w - 10; wx += 20) if (r() < .18) lights.push([wx, wy, 6 + r() * 4, 7, .5 + r() * .5]);
+          x += w;
+        }
+      };
+      row(760, 20, 90, .42, false);
+      mosque(c, 1240, 760, 1.05, col(.5));
+      row(840, 40, 120, .68, true);
+      palm(c, 300, 850, 260, 20, col(.78)); palm(c, 1650, 860, 230, -25, col(.78));
+      row(960, 70, 170, .88, true);
+      c.fillStyle = col(1); c.fillRect(0, 1000, W, 80);
+    } },
+  };
+
+  /* ---------- sprites ---------- */
+  function sprite(r, stops) {
+    const s = document.createElement('canvas'); s.width = s.height = r * 2;
+    const g = s.getContext('2d'), gr = g.createRadialGradient(r, r, 0, r, r, r);
+    stops.forEach(([o, c]) => gr.addColorStop(o, c)); g.fillStyle = gr; g.fillRect(0, 0, r * 2, r * 2); return s;
+  }
+  const glow = sprite(256, [[0, 'rgba(255,255,255,1)'], [.08, 'rgba(255,255,255,.55)'], [.3, 'rgba(255,255,255,.16)'], [1, 'rgba(255,255,255,0)']]);
+
+  const clouds = [];
+  function makeClouds() {
+    const r = rng(77);
+    for (let i = 0; i < 7; i++) {
+      const w = 380 + r() * 420, h = w * .32, s = document.createElement('canvas'); s.width = w; s.height = h;
+      const g = s.getContext('2d');
+      for (let k = 0; k < 26; k++) {
+        const px = w * (.12 + r() * .76), py = h * (.45 + r() * .3) - Math.sin((px / w) * Math.PI) * h * .22, pr = h * (.18 + r() * .22);
+        const gr = g.createRadialGradient(px, py, 0, px, py, pr); gr.addColorStop(0, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = gr; g.fillRect(px - pr, py - pr, pr * 2, pr * 2);
+      }
+      clouds.push({ base: s, tinted: document.createElement('canvas'), x: r() * W * 1.4 - 200, y: 70 + r() * 340, v: 4 + r() * 9, a: .5 + r() * .5 });
+    }
+  }
+  function tintClouds(p, night, warm) {
+    const top = mix(mix([255, 255, 255], p.g, warm * .8), p.u, night * .85);
+    const bot = mix(mix(p.u, [255, 255, 255], .35), p.g, warm * .9);
+    for (const c of clouds) {
+      const t = c.tinted; t.width = c.base.width; t.height = c.base.height;
+      const g = t.getContext('2d'); g.drawImage(c.base, 0, 0); g.globalCompositeOperation = 'source-atop';
+      const gr = g.createLinearGradient(0, 0, 0, t.height); gr.addColorStop(0, css(top)); gr.addColorStop(1, css(mix(bot, p.n, night * .6)));
+      g.fillStyle = gr; g.fillRect(0, 0, t.width, t.height);
+    }
+  }
+
+  // faint Milky Way band, painted once
+  const milky = (() => {
+    const m = document.createElement('canvas'); m.width = W; m.height = 760; const g = m.getContext('2d'), r = rng(11);
+    g.translate(W / 2, 380); g.rotate(-.42);
+    for (let i = 0; i < 90; i++) { const x = (r() - .5) * 2600, y = (r() - .5) * 120 * (1 + r()), rad = 60 + r() * 140;
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, `rgba(${170 + r() * 60},${170 + r() * 50},255,.05)`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
+    for (let i = 0; i < 1600; i++) { const x = (r() - .5) * 2600, y = (r() + r() + r() - 1.5) * 110; g.fillStyle = `rgba(255,255,255,${r() * .5})`; g.fillRect(x, y, r() < .9 ? 1 : 1.6, 1); }
+    return m;
+  })();
+
+  const stars = (() => { const r = rng(3); return Array.from({ length: 280 }, () => ({ x: r() * W, y: r() * 680, s: .5 + r() ** 3 * 1.8, p: r() * 6.28, f: .5 + r() * 2 })); })();
+
+  /* ---------- state ---------- */
+  let st = null, lights = [], birds = null, shooting = null, phase = '', photo = null;
+
+  function now() { return lapse ? new Date(lapse.virt + (performance.now() - lapse.real) * (lapse.rate ?? 1440)) : new Date(); }
+
+  function update(force) {
+    const loc = (TV.state && TV.state.location) || { lat: 33.57, lng: -7.59 };
+    const date = now();
+    const sm = sunMoon(date, loc.lat, loc.lng);
+    const evening = sm.sun.az > 180 ? 1 : 0;
+    const eBlend = st ? st.evening + (evening - st.evening) * .2 : evening;
+    const p = palette(sm.sun.alt, eBlend);
+    const night = clamp((-sm.sun.alt - 2) / 12, 0, 1);
+    const warm = clamp(1 - Math.abs(sm.sun.alt - 1) / 9, 0, 1);
+    st = { ...sm, p, night, warm, evening: eBlend, date };
+    const ph = phaseOf(sm.sun.alt, evening);
+    if (ph !== phase) { phase = ph; document.dispatchEvent(new CustomEvent('tv:phase', { detail: ph })); tryPhoto(ph); }
+    paintSky(); tintClouds(p, night, warm); dirty = true;
+    if (force || performance.now() - lastLand > 6000) paintLand();
+  }
+
+  const hz = () => SCENES[scene].horizon;
+  // azimuth → x: view faces the equator (south for north hemisphere), ~200° wide
+  function project(alt, az) {
+    const lat = ((TV.state && TV.state.location) || {}).lat || 30;
+    const center = lat >= 0 ? 180 : 0;
+    let d = ((az - center + 540) % 360) - 180;
+    return [W / 2 + d / 100 * W * .5, hz() - alt / 62 * (hz() - 60)];
+  }
+
+  function paintSky() {
+    const c = skyCache.getContext('2d'), { p, sun } = st, h = hz();
+    c.setTransform(SKY, 0, 0, SKY, 0, 0);
+    const g = c.createLinearGradient(0, 0, 0, h + 40);
+    g.addColorStop(0, css(p.z)); g.addColorStop(.55, css(p.u)); g.addColorStop(1, css(p.h));
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    const [sx] = project(sun.alt, sun.az), low = clamp(1 - sun.alt / 25, 0, 1) * clamp((sun.alt + 14) / 10, 0, 1);
+    if (low > 0) {
+      const sy = clamp(project(sun.alt, sun.az)[1], h - 400, h + 60);
+      const rg = c.createRadialGradient(sx, sy, 0, sx, sy, 1100);
+      rg.addColorStop(0, css(p.g, .75 * low)); rg.addColorStop(.35, css(p.g, .28 * low)); rg.addColorStop(1, css(p.g, 0));
+      c.fillStyle = rg; c.fillRect(0, 0, W, H);
+      const band = c.createLinearGradient(0, h - 260, 0, h + 20);
+      band.addColorStop(0, css(p.g, 0)); band.addColorStop(1, css(p.g, .35 * low));
+      c.fillStyle = band; c.fillRect(0, h - 260, W, 300);
+    }
+    // water: mirrored sky
+    const sc = SCENES[scene];
+    if (sc.water) {
+      const wg = c.createLinearGradient(0, sc.water, 0, H);
+      wg.addColorStop(0, css(mix(p.h, p.u, .45))); wg.addColorStop(1, css(mix(p.z, p.n, .35)));
+      c.fillStyle = wg; c.fillRect(0, sc.water, W, H - sc.water);
+    }
+  }
+
+  function paintLand() {
+    lastLand = performance.now();
+    const c = landCache.getContext('2d'); c.clearRect(0, 0, W, H); lights = [];
+    SCENES[scene].paint(c, st.p, st.night, lights);
+    if (SCENES[scene].fore) SCENES[scene].fore(c, st.p);
+    // window lights are baked into the still layer
+    if (st.night > 0) for (const [x, y, w, h, k] of lights) { c.fillStyle = `rgba(255,196,120,${st.night * k})`; c.fillRect(x, y, w, h); }
+  }
+
+  function drawWater(t) {
+    const sc = SCENES[scene]; if (!sc.water) return;
+    const { sun, moon, p, night } = st;
+    const body = sun.alt > -3 ? { o: sun, c: p.g, a: clamp((sun.alt + 3) / 6, 0, 1) * (1 - clamp((sun.alt - 30) / 30, 0, .7)) } : { o: moon, c: [235, 230, 210], a: moon.alt > 0 ? .6 * night : 0 };
+    if (body.a <= 0) return;
+    const [x] = project(body.o.alt, body.o.az);
+    for (let y = sc.water + 6; y < H; y += 7) {
+      const k = (y - sc.water) / (H - sc.water), w = 30 + k * 160 + Math.sin(t * 1.3 + y * .21) * 18;
+      ctx.fillStyle = css(body.c, body.a * (1 - k) * (.35 + .25 * Math.sin(t * 2 + y)));
+      ctx.fillRect(x - w / 2 + Math.sin(t + y * .05) * 8, y, w, 2);
+    }
+  }
+
+  function drawMoon(t) {
+    const { moon, phase: ph, waxing, night } = st;
+    if (moon.alt < -3 || night < .15) return;
+    const [x, y] = project(moon.alt, moon.az), r = 30, a = clamp(night * 1.3, 0, 1);
+    ctx.globalAlpha = .4 * a; ctx.drawImage(glow, x - 220, y - 220, 440, 440); ctx.globalAlpha = 1;
+    ctx.save(); ctx.translate(x, y); if (!waxing) ctx.scale(-1, 1);
+    ctx.fillStyle = `rgba(30,36,60,${.55 * a})`; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
+    ctx.fillStyle = `rgba(246,240,222,${a})`;
+    ctx.beginPath(); ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2);
+    const k = Math.cos(ph * Math.PI); // 1 new → -1 full
+    ctx.ellipse(0, 0, Math.abs(k) * r, r, 0, Math.PI / 2, -Math.PI / 2, k > 0);
+    ctx.fill(); ctx.restore();
+  }
+
+  function drawSun() {
+    const { sun, p } = st;
+    if (sun.alt < -2) return;
+    const [x, y] = project(sun.alt, sun.az), low = clamp(1 - sun.alt / 20, 0, 1);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = .55 + .3 * (1 - low); ctx.drawImage(glow, x - 420, y - 420, 840, 840);
+    ctx.globalAlpha = .9; ctx.drawImage(glow, x - 150, y - 150, 300, 300);
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    ctx.fillStyle = css(mix([255, 253, 246], p.g, low * .75)); ctx.beginPath(); ctx.arc(x, y, 30, 0, 7); ctx.fill();
+  }
+
+  function drawBirds(t, dt) {
+    const { sun } = st;
+    if (!birds && sun.alt > 3 && sun.alt < 40 && Math.random() < dt / 40) {
+      const dir = Math.random() < .5 ? 1 : -1;
+      birds = { x: dir > 0 ? -120 : W + 120, y: 260 + Math.random() * 220, dir, list: Array.from({ length: 5 + (Math.random() * 5 | 0) }, (_, i) => [Math.ceil(i / 2), i % 2 ? 1 : -1, Math.random() * 6]) };
+    }
+    if (!birds) return;
+    birds.x += birds.dir * 60 * dt; birds.y -= 4 * dt;
+    ctx.strokeStyle = css(st.p.n, .7); ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+    for (const [rank, side, ph] of birds.list) {
+      const bx = birds.x - birds.dir * rank * 30, by = birds.y + side * rank * 16, f = Math.sin(t * 9 + ph) * 5;
+      ctx.beginPath(); ctx.moveTo(bx - 9, by - f); ctx.quadraticCurveTo(bx - 4, by - 4, bx, by); ctx.quadraticCurveTo(bx + 4, by - 4, bx + 9, by - f); ctx.stroke();
+    }
+    if (birds.x < -400 || birds.x > W + 400) birds = null;
+  }
+
+  function drawShooting(t, dt) {
+    if (st.night < .8) return;
+    if (!shooting && Math.random() < dt / 22) shooting = { x: 300 + Math.random() * 1300, y: 60 + Math.random() * 220, life: 0 };
+    if (!shooting) return;
+    shooting.life += dt / .9; const k = shooting.life;
+    const x = shooting.x + k * 420, y = shooting.y + k * 160;
+    const g = ctx.createLinearGradient(x - 160, y - 60, x, y); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, `rgba(255,255,255,${.8 * Math.sin(Math.min(k, 1) * Math.PI)})`);
+    ctx.strokeStyle = g; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x - 160, y - 60); ctx.lineTo(x, y); ctx.stroke();
+    if (k >= 1) shooting = null;
+  }
+
+  let last = 0;
+  function frame(ms) {
+    requestAnimationFrame(frame);
+    if (ms - last < FRAME) return;       // the sky moves slowly: 24 fps on the TV leaves the GPU free for the UI
+    const dt = Math.min(.1, (ms - last) / 1000); last = ms;
+    if (photo && photo.active) return;
+    if (ms < busyUntil) return; // navigating: let the UI have every frame
+    if (ms - lastSky > (lapse ? 120 : mode === 'still' ? 30000 : 2000)) { lastSky = ms; update(lapse && ms - lastLand > 400); }
+    if (mode === 'still' && !lapse) { if (!dirty) return; dirty = false; }
+    const t = (ms - t0) / 1000;
+    ctx.drawImage(skyCache, 0, 0, W, H);
+    if (st.p.s > 0) {
+      ctx.globalAlpha = st.p.s * .9; ctx.drawImage(milky, 0, 0); ctx.globalAlpha = 1;
+      for (const s of stars) {
+        if (s.y > hz() - 20) continue;
+        const a = st.p.s * (.55 + .45 * Math.sin(t * s.f + s.p));
+        ctx.fillStyle = `rgba(255,255,255,${a * (s.s > 1.5 ? 1 : .8)})`; ctx.fillRect(s.x, s.y, s.s, s.s);
+      }
+    }
+    drawShooting(t, dt);
+    drawMoon(t); drawSun();
+    for (const c of clouds) {
+      c.x += c.v * dt * (lapse ? 30 : 1); if (c.x > W + 50) c.x = -c.base.width - 50;
+      ctx.globalAlpha = c.a * (1 - st.night * .72); ctx.drawImage(c.tinted, c.x, c.y); ctx.globalAlpha = 1;
+    }
+    drawBirds(t, dt);
+    drawWater(t);
+  }
+
+  /* ---------- photo mode: your own images per phase ---------- */
+  function tryPhoto(ph) {
+    if (!photo) return;
+    if (mode !== 'photos') { if (photo.active) { photo.active = false; showCanvas(1); photo.host.innerHTML = ''; } return; }
+    const img = new Image();
+    img.onload = () => {
+      const el = document.createElement('div'); el.className = 'sky-photo'; el.style.backgroundImage = `url("${img.src}")`;
+      photo.host.appendChild(el); requestAnimationFrame(() => el.classList.add('in'));
+      [...photo.host.children].slice(0, -1).forEach(o => { o.classList.remove('in'); setTimeout(() => o.remove(), 2000); });
+      photo.active = true; showCanvas(0);
+    };
+    img.onerror = () => { if (photo.active) { photo.active = false; showCanvas(1); photo.host.innerHTML = ''; } };
+    img.src = `${photo.base}${ph}.jpg`;
+  }
+
+  /* ---------- time-lapse preview ---------- */
+  let label;
+  function toggleLapse() {
+    lapse = lapse ? null : { real: performance.now(), virt: Date.now() };
+    if (!label) { label = document.createElement('div'); label.className = 'sky-label'; document.getElementById('stage').appendChild(label); }
+    label.classList.toggle('show', !!lapse);
+    lastSky = 0;
+  }
+  setInterval(() => {
+    if (!lapse || !label) return;
+    const d = now(); label.innerHTML = `<b>Time-lapse</b> ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} · ${PHASE_NAMES[phase]}<span>T to stop</span>`;
+  }, 100);
+
+  const PHASE_NAMES = { night: 'Night', dawn: 'Dawn', sunrise: 'Sunrise', morning: 'Morning', noon: 'Midday', afternoon: 'Afternoon', golden: 'Golden hour', sunset: 'Sunset', dusk: 'Dusk' };
+
+  TV.sky = {
+    SCENES, PHASE_NAMES,
+    start(canvas, opts = {}) {
+      // two layers: the moving sky at reduced resolution (soft gradients look the same) and the crisp
+      // landscape as a still canvas on top that is only repainted every few seconds
+      cv = canvas; cv.width = W * SKY; cv.height = H * SKY; ctx = cv.getContext('2d', { alpha: false });
+      ctx.setTransform(SKY, 0, 0, SKY, 0, 0);
+      skyCache = document.createElement('canvas'); skyCache.width = W * SKY; skyCache.height = H * SKY;
+      landCache = document.createElement('canvas'); landCache.width = W; landCache.height = H; landCache.className = 'land';
+      cv.after(landCache);
+      scene = ((TV.settings && TV.settings.scenes) || {})[location.pathname] || opts.scene || 'dunes';
+      if (opts.photoHost) photo = { host: opts.photoHost, base: opts.photoBase || '../wallpapers/', active: false };
+      mode = (TV.settings && TV.settings.wallMode) || 'live';
+      makeClouds(); update(true); requestAnimationFrame(frame);
+    },
+    setScene(s) { scene = s; lastLand = 0; update(true); },
+    setMode(m) { mode = m; dirty = true; tryPhoto(phase); },
+    get scene() { return scene; },
+    get mode() { return mode; },
+    get phase() { return phase; },
+    get state() { return st; },
+    toggleLapse, refresh() { update(true); },
+    // freeze the sky at a given hour (debug / previews): TV.sky.at(18.2)
+    at(h) { const d = new Date(); d.setHours(Math.floor(h), Math.round((h % 1) * 60), 0, 0); lapse = { real: performance.now(), virt: d.getTime(), rate: 0 }; lastLand = 0; update(true); },
+  };
+
+  document.addEventListener('keydown', e => { if ((e.key === 't' || e.key === 'T') && TV.sky && cv) toggleLapse(); });
+})();

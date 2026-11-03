@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 320x180 Android TV banner: dusk sky, dune and crescent -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp" android:height="180dp" android:viewportWidth="320" android:viewportHeight="180">
+    <path android:pathData="M0,0h320v180h-320z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="180">
+                <item android:offset="0" android:color="#FF1B2350" />
+                <item android:offset="0.6" android:color="#FF8A5A8C" />
+                <item android:offset="1" android:color="#FFFFB27A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FF2A1A30" android:pathData="M0,140 C70,118 120,124 170,138 C220,152 270,128 320,120 L320,180 L0,180 Z" />
+    <path android:fillColor="#FF180E1E" android:pathData="M0,160 C90,146 180,150 320,166 L320,180 L0,180 Z" />
+    <path android:fillColor="#FFFFF4DC" android:pathData="M262,30 a16,16 0 1,0 14,24 a12,12 0 1,1 -14,-24z" />
+</vector>

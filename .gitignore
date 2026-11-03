@@ -1,0 +1,20 @@
+# Android build output and local machine config
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.iml
+
+# Built APKs live in GitHub Releases, not in the repo
+*.apk
+
+# Local working files
+/screenshots/
+.claude/
+tools/platform-tools/
+tools/platform-tools.zip
+tools/removed-*.txt
+
+# The original download of the athan (a copy is in assets/athan.mp3)
+The Adhan*.mp3
