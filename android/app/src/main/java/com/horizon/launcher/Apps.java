@@ -33,7 +33,7 @@ import java.util.Map;
  * instead of loading every app's resources and re-encoding every banner.
  */
 final class Apps {
-    private static final LruCache<String, byte[]> images = new LruCache<String, byte[]>(6 * 1024 * 1024) {
+    private static final LruCache<String, byte[]> images = new LruCache<String, byte[]>(2 * 1024 * 1024) /* the disk cache does the rest */ {
         @Override protected int sizeOf(String k, byte[] v) { return v.length; }
     };
 
@@ -136,14 +136,14 @@ final class Apps {
         ActivityInfo ai = launchable(c).get(pkg);
         if (ai == null) return null;
         File dir = new File(c.getCacheDir(), "img");
-        String stem = pkg + (wantBanner ? ".b." : ".i.");
+        String stem = pkg + (wantBanner ? ".b2." : ".i2."); // v2 = smaller images
         File file = new File(dir, stem + version(ai) + ".png");
         if (file.isFile()) {
             try { byte[] png = read(file); images.put(key, png); return png; } catch (IOException ignored) { }
         }
         PackageManager pm = c.getPackageManager();
         Drawable d = wantBanner ? banner(pm, ai) : null;
-        Bitmap bmp = d != null ? render(d, 480, 270) : render(ai.loadIcon(pm), 192, 192);
+        Bitmap bmp = d != null ? render(d, 320, 180) : render(ai.loadIcon(pm), 144, 144) /* a little above on-screen size: sharp, but 2x less memory */;
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
         bmp.recycle();
@@ -151,7 +151,8 @@ final class Apps {
         images.put(key, png);
         try {
             dir.mkdirs();
-            File[] old = dir.listFiles((f, n) -> n.startsWith(stem)); // older versions of this app's image
+            String legacy = pkg + (wantBanner ? ".b." : ".i."); // images from v1.0
+            File[] old = dir.listFiles((f, n) -> n.startsWith(stem) || n.startsWith(legacy)); // older versions of this app's image
             if (old != null) for (File f : old) f.delete();
             write(file, png);
         } catch (Exception ignored) { }

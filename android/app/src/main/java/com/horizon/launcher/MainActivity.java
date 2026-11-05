@@ -286,7 +286,7 @@ public class MainActivity extends Activity {
         if (web == null) return;
         web.onResume();
         web.resumeTimers();
-        js("window.TV && TV.native && TV.native.resume()");
+        js("window.TV && TV.native && TV.native.resume(); window.TV && TV.sky && TV.sky.wake && TV.sky.wake()");
     }
 
     // while another app is open the home screen sleeps: no animation, no CPU
@@ -294,6 +294,8 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         if (web == null) return;
+        // another app is on screen: the wallpaper hands back its working memory (rebuilt in ~65 ms on return)
+        web.evaluateJavascript("window.TV && TV.sky && TV.sky.sleep && TV.sky.sleep()", null);
         web.onPause();
         web.pauseTimers();
     }

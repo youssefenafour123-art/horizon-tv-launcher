@@ -241,14 +241,16 @@ window.TV = window.TV || {};
   function makeClouds() {
     const r = rng(77);
     for (let i = 0; i < 7; i++) {
-      const w = 380 + r() * 420, h = w * .32, s = document.createElement('canvas'); s.width = w; s.height = h;
-      const g = s.getContext('2d');
-      for (let k = 0; k < 26; k++) {
-        const px = w * (.12 + r() * .76), py = h * (.45 + r() * .3) - Math.sin((px / w) * Math.PI) * h * .22, pr = h * (.18 + r() * .22);
-        const gr = g.createRadialGradient(px, py, 0, px, py, pr); gr.addColorStop(0, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-        g.fillStyle = gr; g.fillRect(px - pr, py - pr, pr * 2, pr * 2);
-      }
-      clouds.push({ base: s, tinted: document.createElement('canvas'), x: r() * W * 1.4 - 200, y: 70 + r() * 340, v: 4 + r() * 9, a: .5 + r() * .5 });
+      const w = Math.round(380 + r() * 420), h = Math.round(w * .32);
+      clouds.push({ seed: 1000 + i * 31, w, h, tinted: document.createElement('canvas'), x: r() * W * 1.4 - 200, y: 70 + r() * 340, v: 4 + r() * 9, a: .5 + r() * .5 });
+    }
+  }
+  function puffs(g, c) {
+    const r = rng(c.seed), w = c.w, h = c.h;
+    for (let k = 0; k < 26; k++) {
+      const px = w * (.12 + r() * .76), py = h * (.45 + r() * .3) - Math.sin((px / w) * Math.PI) * h * .22, pr = h * (.18 + r() * .22);
+      const gr = g.createRadialGradient(px, py, 0, px, py, pr); gr.addColorStop(0, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(px - pr, py - pr, pr * 2, pr * 2);
     }
   }
   let cloudKey = '';
@@ -260,9 +262,9 @@ window.TV = window.TV || {};
     cloudKey = key;
     for (const c of clouds) {
       const t = c.tinted;
-      if (t.width !== c.base.width || t.height !== c.base.height) { t.width = c.base.width; t.height = c.base.height; }
+      if (t.width !== c.w || t.height !== c.h) { t.width = c.w; t.height = c.h; }
       const g = t.getContext('2d'); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, t.width, t.height);
-      g.drawImage(c.base, 0, 0); g.globalCompositeOperation = 'source-atop';
+      puffs(g, c); g.globalCompositeOperation = 'source-atop';
       const gr = g.createLinearGradient(0, 0, 0, t.height); gr.addColorStop(0, css(top)); gr.addColorStop(1, css(mix(bot, p.n, night * .6)));
       g.fillStyle = gr; g.fillRect(0, 0, t.width, t.height);
     }
@@ -277,7 +279,7 @@ window.TV = window.TV || {};
     for (let i = 0; i < 1600; i++) { const x = (r() - .5) * 2600, y = (r() + r() + r() - 1.5) * 110; g.fillStyle = `rgba(255,255,255,${r() * .5})`; g.fillRect(x, y, r() < .9 ? 1 : 1.6, 1); }
     return m;
   };
-  let milky = makeMilky();
+  let milky = null; // created at dusk, released at dawn
 
   const stars = (() => { const r = rng(3); return Array.from({ length: 280 }, () => ({ x: r() * W, y: r() * 680, s: .5 + r() ** 3 * 1.8, p: r() * 6.28, f: .5 + r() * 2 })); })();
 
@@ -298,6 +300,7 @@ window.TV = window.TV || {};
     st = { ...sm, p, night, warm, evening: eBlend, date };
     const ph = phaseOf(sm.sun.alt, evening);
     if (ph !== phase) { phase = ph; document.dispatchEvent(new CustomEvent('tv:phase', { detail: ph })); tryPhoto(ph); }
+    if (p.s <= 0 && milky) { milky.width = milky.height = 0; milky = null; }
     paintSky(); tintClouds(p, night, warm); dirty = true;
     const key = landKey();
     if (force || (key !== lastLandKey && performance.now() - lastLand > 30000)) paintLand();
@@ -436,13 +439,14 @@ window.TV = window.TV || {};
     requestAnimationFrame(frame);
     if (ms - last < FRAME) return;       // the sky moves slowly: 24 fps on the TV leaves the GPU free for the UI
     const dt = Math.min(.1, (ms - last) / 1000); last = ms;
-    if (photo && photo.active) return;
+    if (asleep || (photo && photo.active)) return;
     if (ms < busyUntil) return; // navigating: let the UI have every frame
     if (ms - lastSky > (lapse ? 120 : mode === 'still' ? 30000 : 2000)) { lastSky = ms; update(lapse && ms - lastLand > 400); }
     if (mode === 'still' && !lapse) { if (!dirty) return; dirty = false; }
     const t = (ms - t0) / 1000;
     ctx.drawImage(skyCache, 0, 0, W, H);
     if (st.p.s > 0) {
+      if (!milky) milky = makeMilky();
       ctx.globalAlpha = st.p.s * .9; ctx.drawImage(milky, 0, 0); ctx.globalAlpha = 1;
       ctx.fillStyle = '#fff';
       const top = hz() - 20;
@@ -456,7 +460,7 @@ window.TV = window.TV || {};
     drawShooting(t, dt);
     drawMoon(t); drawSun();
     for (const c of clouds) {
-      c.x += c.v * dt * (lapse ? 30 : 1); if (c.x > W + 50) c.x = -c.base.width - 50;
+      c.x += c.v * dt * (lapse ? 30 : 1); if (c.x > W + 50) c.x = -c.w - 50;
       ctx.globalAlpha = c.a * (1 - st.night * .72); ctx.drawImage(c.tinted, c.x, c.y); ctx.globalAlpha = 1;
     }
     drawBirds(t, dt);
@@ -484,10 +488,25 @@ window.TV = window.TV || {};
   function rebuild(why) {
     if (!cv) return;
     console.log('HZSKY rebuild ' + (why || ''));
-    glow = makeGlow(); milky = makeMilky();
+    glow = makeGlow(); milky = null;
     clouds.length = 0; makeClouds(); cloudKey = '';
     lastLandKey = ''; lastSky = performance.now();
     update(true); dirty = true; last = 0;
+  }
+  let asleep = false;
+  function sleep() {
+    if (!cv || asleep) return;
+    asleep = true;
+    // keep only the visible canvas (it still shows the last frame); free the caches (~20 MB)
+    for (const c of [skyCache, landCache, ...clouds.map(c => c.tinted)]) { c.width = 0; c.height = 0; }
+    if (milky) { milky.width = milky.height = 0; milky = null; }
+    cloudKey = ''; lastLandKey = '';
+  }
+  function wake() {
+    if (!cv || !asleep) return;
+    skyCache.width = W * SKY; skyCache.height = H * SKY; landCache.width = W; landCache.height = H;
+    asleep = false; lastSky = performance.now();
+    update(true); dirty = true;
   }
   let rebuildTimer = 0;
   const soon = why => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(() => rebuild(why), 120); };
@@ -524,8 +543,8 @@ window.TV = window.TV || {};
       landCache = document.createElement('canvas'); landCache.width = W; landCache.height = H;
       for (const c of [cv, skyCache, landCache]) c.addEventListener('contextrestored', () => soon('restored'));
       // back on screen after standby / another app: check the layers survived
-      document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => { if (isLost() || blank()) rebuild('back'); else dirty = true; }, 300); });
-      setInterval(() => { if (!document.hidden && isLost()) soon('lost'); }, 10000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => { if (asleep) wake(); else if (isLost() || blank()) rebuild('back'); else dirty = true; }, 300); });
+      setInterval(() => { if (!document.hidden && !asleep && isLost()) soon('lost'); }, 10000);
       scene = ((TV.settings && TV.settings.scenes) || {})[location.pathname] || opts.scene || 'dunes';
       if (opts.photoHost) photo = { host: opts.photoHost, base: opts.photoBase || '../wallpapers/', active: false };
       mode = (TV.settings && TV.settings.wallMode) || 'live';
@@ -533,7 +552,8 @@ window.TV = window.TV || {};
       makeClouds(); update(true); requestAnimationFrame(frame);
     },
     setScene(s) { scene = s; lastLand = 0; update(true); },
-    rebuild,
+    rebuild, sleep,
+    wake() { setTimeout(wake, 150); }, // after the first frame is back on screen
     setMode(m) { mode = m; dirty = true; tryPhoto(phase); },
     get scene() { return scene; },
     get mode() { return mode; },
