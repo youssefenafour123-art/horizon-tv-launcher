@@ -269,6 +269,8 @@ body.serif .settings-title { font-weight: 400; }
 (function () {
   const $ = id => document.getElementById(id);
   TV.look.apply();
+  // boot timing, read with adb logcat -s Horizon
+  requestAnimationFrame(() => requestAnimationFrame(() => console.log('HZBOOT first frame ' + Math.round(performance.now()) + 'ms')));
 
   let apps = [];
   const face = a => a.native ? (a.banner ? `<img class="shot" src="/icon/${encodeURIComponent(a.id)}?banner=1" alt="">`

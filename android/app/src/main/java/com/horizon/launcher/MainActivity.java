@@ -23,8 +23,15 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +43,7 @@ public class MainActivity extends Activity {
     private WebView web;
     private BroadcastReceiver packageReceiver;
     private String pendingJs;
+    private String userAgent;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -59,12 +67,15 @@ public class MainActivity extends Activity {
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         s.setOffscreenPreRaster(true); // keep tiles rasterized: no blank flashes when sliding the app row
 
+        userAgent = s.getUserAgentString();
         web.addJavascriptInterface(new Bridge(this), "Horizon");
         web.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
                 Uri u = req.getUrl();
-                if (!HOST.equals(u.getHost())) return null;
+                String host = u.getHost();
+                if ("fonts.googleapis.com".equals(host) || "fonts.gstatic.com".equals(host)) return font(u);
+                if (!HOST.equals(host)) return null;
                 return serve(u);
             }
 
@@ -76,6 +87,17 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
                 return !HOST.equals(req.getUrl().getHost());
+            }
+
+            // the page's process was killed for memory: rebuild the home screen instead of crashing
+            @Override
+            public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail d) {
+                android.util.Log.w("Horizon", "renderer gone, restarting");
+                web = null;
+                if (view.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) view.getParent()).removeView(view);
+                view.destroy();
+                recreate();
+                return true;
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -120,6 +142,7 @@ public class MainActivity extends Activity {
         registerReceiver(packageReceiver, f);
 
         AthanScheduler.reschedule(this);
+        KeepAlive.start(this);
     }
 
     private boolean hasLocation() {
@@ -148,6 +171,64 @@ public class MainActivity extends Activity {
             return new WebResourceResponse(mime, mime.startsWith("text") || mime.endsWith("javascript") ? "utf-8" : null, in);
         } catch (IOException e) {
             return notFound();
+        }
+    }
+
+    /**
+     * Google Fonts, kept on the TV forever after the first download. After standby the Wi-Fi
+     * often isn't back yet, and the fonts would otherwise be fetched again (the CSS expires daily).
+     */
+    private WebResourceResponse font(Uri u) {
+        String url = u.toString();
+        boolean css = "fonts.googleapis.com".equals(u.getHost());
+        String path = u.getPath() == null ? "" : u.getPath();
+        String mime = css ? "text/css" : path.endsWith(".woff2") ? "font/woff2" : path.endsWith(".woff") ? "font/woff" : "font/ttf";
+        File dir = new File(getFilesDir(), "fonts");
+        File file = new File(dir, sha1(url));
+        byte[] body = null;
+        if (file.isFile()) {
+            try { body = readAll(new FileInputStream(file)); } catch (IOException ignored) { }
+        }
+        if (body == null) {
+            try {
+                HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+                c.setConnectTimeout(6000); c.setReadTimeout(10000);
+                if (userAgent != null) c.setRequestProperty("User-Agent", userAgent); // so Google serves small woff2 subsets
+                if (c.getResponseCode() != 200) { c.disconnect(); return null; }
+                body = readAll(c.getInputStream());
+                c.disconnect();
+                dir.mkdirs();
+                File tmp = new File(dir, file.getName() + ".tmp");
+                try (FileOutputStream out = new FileOutputStream(tmp)) { out.write(body); }
+                tmp.renameTo(file);
+            } catch (Exception e) {
+                return null; // offline: let the WebView try its own cache
+            }
+        }
+        WebResourceResponse r = new WebResourceResponse(mime, css ? "utf-8" : null, new ByteArrayInputStream(body));
+        Map<String, String> h = new HashMap<>();
+        h.put("Access-Control-Allow-Origin", "*");
+        h.put("Cache-Control", "max-age=31536000");
+        r.setResponseHeaders(h);
+        return r;
+    }
+
+    private static byte[] readAll(InputStream in) throws IOException {
+        try (InputStream i = in) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[16384];
+            for (int n; (n = i.read(buf)) > 0; ) out.write(buf, 0, n);
+            return out.toByteArray();
+        }
+    }
+
+    private static String sha1(String s) {
+        try {
+            StringBuilder b = new StringBuilder();
+            for (byte x : MessageDigest.getInstance("SHA-1").digest(s.getBytes("UTF-8"))) b.append(String.format("%02x", x));
+            return b.toString();
+        } catch (Exception e) {
+            return Integer.toHexString(s.hashCode());
         }
     }
 
@@ -202,6 +283,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         hideSystemUi();
+        if (web == null) return;
         web.onResume();
         web.resumeTimers();
         js("window.TV && TV.native && TV.native.resume()");
@@ -211,6 +293,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        if (web == null) return;
         web.onPause();
         web.pauseTimers();
     }
@@ -218,7 +301,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (packageReceiver != null) unregisterReceiver(packageReceiver);
-        web.destroy();
+        if (web != null) web.destroy();
         super.onDestroy();
     }
 }

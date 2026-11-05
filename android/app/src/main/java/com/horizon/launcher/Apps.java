@@ -15,23 +15,35 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Installed apps: list, real banners/icons as PNG, brand color, launch. */
+/**
+ * Installed apps: list, real banners/icons as PNG, brand color, launch.
+ * Everything is cached on disk per app version, so a cold start (e.g. after standby) reads a few files
+ * instead of loading every app's resources and re-encoding every banner.
+ */
 final class Apps {
     private static final LruCache<String, byte[]> images = new LruCache<String, byte[]>(6 * 1024 * 1024) {
         @Override protected int sizeOf(String k, byte[] v) { return v.length; }
     };
 
     private static String listCache;
+    private static Map<String, ActivityInfo> launchCache;
 
-    static void clearCache() { images.evictAll(); listCache = null; }
+    static synchronized void clearCache() { images.evictAll(); listCache = null; launchCache = null; }
 
-    private static Map<String, ActivityInfo> launchable(Context c) {
+    private static synchronized Map<String, ActivityInfo> launchable(Context c) {
+        if (launchCache != null) return launchCache;
         PackageManager pm = c.getPackageManager();
         Map<String, ActivityInfo> out = new LinkedHashMap<>();
         for (String cat : new String[]{Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER}) {
@@ -42,23 +54,53 @@ final class Apps {
                 out.put(pkg, ri.activityInfo);
             }
         }
+        launchCache = out;
         return out;
+    }
+
+    /** changes whenever the app is installed or updated */
+    private static long version(ActivityInfo ai) {
+        return new File(ai.applicationInfo.sourceDir).lastModified();
     }
 
     static synchronized String list(Context c) {
         if (listCache != null) return listCache;
         PackageManager pm = c.getPackageManager();
+        File file = new File(c.getFilesDir(), "apps.json");
+        String locale = Locale.getDefault().toString();
+        JSONObject saved = null;
+        try { saved = new JSONObject(new String(read(file), "UTF-8")); } catch (Exception ignored) { }
+        if (saved != null && !locale.equals(saved.optString("locale"))) saved = null;
+        JSONObject savedRows = saved == null ? new JSONObject() : saved.optJSONObject("rows");
+        if (savedRows == null) savedRows = new JSONObject();
+
+        JSONObject keep = new JSONObject();
         List<JSONObject> rows = new ArrayList<>();
+        boolean changed = saved == null;
         for (Map.Entry<String, ActivityInfo> e : launchable(c).entrySet()) {
             try {
                 ActivityInfo ai = e.getValue();
-                JSONObject o = new JSONObject();
-                o.put("pkg", e.getKey());
-                o.put("label", String.valueOf(ai.loadLabel(pm)));
-                o.put("banner", banner(pm, ai) != null);
-                o.put("color", hex(brandColor(ai.loadIcon(pm))));
+                long v = version(ai);
+                JSONObject cached = savedRows.optJSONObject(e.getKey());
+                JSONObject o;
+                if (cached != null && cached.optLong("v") == v) {
+                    o = cached;
+                } else {
+                    o = new JSONObject();
+                    o.put("pkg", e.getKey());
+                    o.put("label", String.valueOf(ai.loadLabel(pm)));
+                    o.put("banner", banner(pm, ai) != null);
+                    o.put("color", hex(brandColor(ai.loadIcon(pm))));
+                    o.put("v", v);
+                    changed = true;
+                }
+                keep.put(e.getKey(), o);
                 rows.add(o);
             } catch (Exception ignored) { }
+        }
+        if (keep.length() != savedRows.length()) changed = true;
+        if (changed) {
+            try { write(file, new JSONObject().put("locale", locale).put("rows", keep).toString().getBytes("UTF-8")); } catch (Exception ignored) { }
         }
         // apps with TV banners first, then alphabetical
         Collections.sort(rows, (a, b) -> {
@@ -93,14 +135,43 @@ final class Apps {
         if (hit != null) return hit;
         ActivityInfo ai = launchable(c).get(pkg);
         if (ai == null) return null;
+        File dir = new File(c.getCacheDir(), "img");
+        String stem = pkg + (wantBanner ? ".b." : ".i.");
+        File file = new File(dir, stem + version(ai) + ".png");
+        if (file.isFile()) {
+            try { byte[] png = read(file); images.put(key, png); return png; } catch (IOException ignored) { }
+        }
         PackageManager pm = c.getPackageManager();
         Drawable d = wantBanner ? banner(pm, ai) : null;
         Bitmap bmp = d != null ? render(d, 480, 270) : render(ai.loadIcon(pm), 192, 192);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
+        bmp.recycle();
         byte[] png = out.toByteArray();
         images.put(key, png);
+        try {
+            dir.mkdirs();
+            File[] old = dir.listFiles((f, n) -> n.startsWith(stem)); // older versions of this app's image
+            if (old != null) for (File f : old) f.delete();
+            write(file, png);
+        } catch (Exception ignored) { }
         return png;
+    }
+
+    private static byte[] read(File f) throws IOException {
+        try (InputStream in = new FileInputStream(f)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream((int) Math.max(1024, f.length()));
+            byte[] buf = new byte[16384];
+            for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);
+            return out.toByteArray();
+        }
+    }
+
+    /** write to a temp file, then rename: a power cut never leaves a half-written cache */
+    private static void write(File f, byte[] data) throws IOException {
+        File tmp = new File(f.getPath() + ".tmp");
+        try (FileOutputStream out = new FileOutputStream(tmp)) { out.write(data); }
+        if (!tmp.renameTo(f)) { f.delete(); tmp.renameTo(f); }
     }
 
     private static Bitmap render(Drawable d, int w, int h) {
