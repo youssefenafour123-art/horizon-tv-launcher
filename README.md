@@ -61,7 +61,7 @@ You need a computer on the same Wi-Fi as the TV, plus Google's free **adb** tool
 2. **On the computer**:
    ```bash
    adb connect 192.168.1.40:5555        # your TV's IP; accept the prompt on the TV
-   adb install Horizon-1.0.apk
+   adb install Horizon-1.1.apk
    ```
 3. Open **Horizon** from the TV's app list. On first launch, allow location if asked (used only to pick your city; you can also choose a city by hand).
 
@@ -133,6 +133,7 @@ Horizon has **no analytics, no ads, no account and no server of its own**. The o
 | Query all packages | A launcher must list your installed apps |
 | Exact alarms, boot completed, wake lock | Play the athan on time, even after a restart |
 | Foreground service (media), notifications, full-screen intent | Play the athan over other apps and show its card |
+| Foreground service (special use) | Keeps the home screen loaded while the TV is in standby, so it appears instantly at power-on (a silent "Home screen ready" notification) |
 | Display over other apps (optional) | Show the athan card while another app is open |
 
 ---
