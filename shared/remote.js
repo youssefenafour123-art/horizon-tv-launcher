@@ -46,6 +46,12 @@ window.TV = window.TV || {};
   function move(dir) {
     const list = items();
     if (!current || !list.includes(current)) return focus(list[0]);
+    // fast path: left/right inside an app row is just the neighbor (no measuring every element)
+    if ((dir === 'left' || dir === 'right') && current.parentElement.hasAttribute('data-track')) {
+      let n = current;
+      do n = dir === 'right' ? n.nextElementSibling : n.previousElementSibling; while (n && !n.hasAttribute('data-focus'));
+      return n ? focus(n) : bump(dir);
+    }
     const a = current.getBoundingClientRect();
     const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
     let best = null, bestScore = Infinity;
