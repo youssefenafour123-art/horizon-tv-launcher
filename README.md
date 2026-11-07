@@ -20,6 +20,7 @@ watching something else.
 | **Full athan at each prayer** | Uses Android's alarm system, so it plays even inside Netflix or YouTube, survives reboots, pauses what's playing, and shows a full-screen athan card. Any remote button stops it. Each prayer can be switched on or off separately, and the volume is adjustable. |
 | **Your real apps** | Every installed app with its own TV banner. The selected app gets a glowing edge in its own color. **Hold OK on an app to move it**: ◀ ▶ to move, ▲ to put it first. |
 | **Make it yours** | 7 font styles, clock size and weight, an accent color that can follow the sky, 12/24-hour clock, five scenes, live or still wallpaper, dim level, and a Quran verse that changes through the day. |
+| **Matches of the day** | Today's football on the home screen: LaLiga, Premier League, Serie A, Ligue 1, Botola Pro, Champions League, Europa League, Conference League and Morocco's national team. Short club codes with crests, live minute and score. Real Madrid and Morocco come first on days they play. Select the card for the full list, day by day. |
 | **Hijri date** | Umm al-Qura calendar, with a ±2-day adjustment for local moon sighting. |
 | **Ambient mode** | After a quiet minute the interface fades and only the sky and the clock remain. |
 
@@ -36,6 +37,10 @@ All screenshots come from a real TCL Google TV (1080p). The apps shown are simpl
 | ![Midday](docs/screenshots/midday.jpg) | ![Afternoon](docs/screenshots/afternoon.jpg) |
 | **Sunset** | **Night** |
 | ![Sunset](docs/screenshots/sunset.jpg) | ![Night](docs/screenshots/home-night.jpg) |
+
+**Matches of the day**, with live scores (select the card for every game, day by day):
+
+![Matches of the day](docs/screenshots/matches.jpg)
 
 **Your apps**, with their own banners. The selected app glows in its own color, and you can hold OK to reorder:
 
@@ -61,7 +66,7 @@ You need a computer on the same Wi-Fi as the TV, plus Google's free **adb** tool
 2. **On the computer**:
    ```bash
    adb connect 192.168.1.40:5555        # your TV's IP; accept the prompt on the TV
-   adb install Horizon-1.1.apk
+   adb install Horizon-1.2.apk
    ```
 3. Open **Horizon** from the TV's app list. On first launch, allow location if asked (used only to pick your city; you can also choose a city by hand).
 
@@ -112,6 +117,7 @@ Sound always plays. To also see the athan card while another app is open, go to 
 - **Appearance**: font style (Modern, Elegant, Editorial, Rounded, Minimal, Tech, Bold), clock size and weight, accent color, 12/24-hour, seconds
 - **Wallpaper**: scene, mode (Live · Still · My photos), dim, parallax, "Preview a full day"
 - **Home screen**: greeting, verse, how often the verse changes, prayer timeline, ambient mode delay, reset app order, athan over other apps, Android TV settings
+- **Matches**: show the card, and each competition (and Real Madrid / Morocco) on or off
 - **Prayer times**: location (automatic or a list of cities), calculation method, Asr, Hijri date ±days
 - **Athan**: on/off, volume, on/off per prayer, test
 
@@ -125,10 +131,11 @@ Horizon has **no analytics, no ads, no account and no server of its own**. The o
 
 - **Your approximate location**, once, to find your city: from the TV's location if available, otherwise from your IP address via [ipwho.is](https://ipwho.is) (fallback [ipapi.co](https://ipapi.co)). It's stored only on the TV. Choosing a city by hand stops this.
 - **Fonts** from Google Fonts (cached after the first load).
+- **Football scores**: [ESPN](https://www.espn.com)'s public scoreboard and [TheSportsDB](https://www.thesportsdb.com) (Botola Pro). Only competition and date are sent; nothing about you. Turn the card off in Settings → Matches and these stop.
 
 | Permission | Why |
 |---|---|
-| Internet, network state | Location lookup and fonts above |
+| Internet, network state | Location lookup, fonts and football scores above |
 | Approximate location | Prayer times for where you are |
 | Query all packages | A launcher must list your installed apps |
 | Exact alarms, boot completed, wake lock | Play the athan on time, even after a restart |
@@ -186,6 +193,7 @@ shared/
   look.js              fonts, accent, clock size, appearance toggles
   remote.js            D-pad focus engine (spatial navigation, hold-OK, ambient mode)
   settings.js          the settings panel
+  matches.js           matches of the day (ESPN + TheSportsDB)
   athan.js             athan overlay for the browser preview
 android/               tiny native shell (no libraries, ~25 KB of code)
   MainActivity         home screen WebView, serves the UI from inside the APK
