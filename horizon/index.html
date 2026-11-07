@@ -46,6 +46,50 @@ body.idle .scrim { opacity: .3; }
 body.idle .ui.fade { opacity: 0; transform: translateY(26px); pointer-events: none; }
 body.athan-on .ui { opacity: 0; }
 
+/* ---------- matches of the day: a quiet card under the prayer card (static paint: costs nothing per frame) ---------- */
+.matches { position: absolute; right: 96px; top: 488px; width: 580px; border-radius: 34px; transition: transform .35s var(--spring); }
+.matches .mcore { padding: 13px 26px 9px; border-radius: 34px; background: linear-gradient(160deg, rgba(22,26,48,.6), rgba(8,10,22,.5)); box-shadow: inset 0 0 0 1px var(--hair); }
+.matches.is-focused { transform: scale(1.025); }
+.matches.is-focused .mcore { box-shadow: inset 0 0 0 2px rgba(255,255,255,.92), 0 0 30px rgba(255,255,255,.12); }
+.matches.empty, body.no-matches .matches { display: none; }
+.mhead { display: flex; justify-content: space-between; align-items: center; height: 24px; margin-bottom: 3px; }
+.mhead .mmore { font-size: 15px; color: var(--ink-3); letter-spacing: .04em; }
+.mrow { display: grid; grid-template-columns: 70px 1fr 74px 1fr 60px; align-items: center; height: 34px; font-size: 21px; font-variant-numeric: tabular-nums; }
+.mrow .t { font-size: 17px; color: var(--ink-2); letter-spacing: .02em; }
+.mrow .t.live { color: #ff7a7a; font-weight: 600; }
+.mrow .t.live::before { content: ''; display: inline-block; width: 7px; height: 7px; margin: 0 7px 2px 0; border-radius: 50%; background: #ff5a5a; box-shadow: 0 0 8px #ff5a5a; vertical-align: middle; }
+.mrow .h, .mrow .a { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mrow .h { justify-content: flex-end; }
+.mrow b { font-weight: 500; letter-spacing: .03em; }
+.mrow img { width: 26px; height: 26px; object-fit: contain; flex: none; }
+.mrow .sc { text-align: center; font-weight: 600; color: var(--ink); }
+.mrow.pre .sc { color: var(--ink-3); font-weight: 400; }
+.mrow .tag { text-align: right; font-size: 13px; font-weight: 600; letter-spacing: .12em; color: var(--ink-3); }
+.mrow.mar .tag { font-size: 19px; letter-spacing: 0; }
+.mrow.fav b { color: var(--accent); font-weight: 600; }   /* Morocco and Real Madrid */
+.mrow.next .sc { color: var(--ink-2); font-weight: 500; font-size: 18px; }
+
+/* full list */
+.matches-layer .mscrim { position: absolute; inset: 0; background: rgba(4,6,14,.6); }
+.mpanel { position: absolute; left: 150px; right: 150px; top: 56px; bottom: 56px; border-radius: 50px; padding: 44px 60px 30px; display: flex; flex-direction: column;
+  background: rgba(13,16,30,.96); box-shadow: inset 0 0 0 1px var(--hair), inset 0 1px 0 rgba(255,255,255,.12); transform: translateY(40px); }
+.matches-layer.open .mpanel { transform: none; transition: transform .6s var(--ease); }
+.mtop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
+.mtitle { font-family: var(--f-display); font-size: 46px; font-weight: 300; letter-spacing: -.03em; }
+body.serif .mtitle { font-weight: 400; }
+.mdaybtn { display: flex; align-items: center; gap: 18px; height: 60px; padding: 0 26px; border-radius: 999px; font-size: 22px; color: var(--ink); background: rgba(255,255,255,.08); transition: background .25s var(--ease), color .25s, transform .4s var(--spring); }
+.mdaybtn i { font-style: normal; font-size: 30px; opacity: .6; }
+.mdaybtn.is-focused { background: #fff; color: #0b0f1e; transform: scale(1.04); }
+.mlist { flex: 1; overflow: hidden; display: flex; gap: 70px; align-items: flex-start; }
+.mcol { flex: 1; min-width: 0; }
+.mgroup { margin-bottom: 26px; }
+.mgroup h3 { display: flex; align-items: center; gap: 14px; margin: 0 0 6px; font-size: 15px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-2); }
+.mgroup h3 span { font-size: 13px; letter-spacing: .12em; padding: 4px 10px; border-radius: 8px; background: rgba(255,255,255,.1); color: var(--ink); }
+.mlist .mrow { grid-template-columns: 84px 1fr 84px 1fr; height: 48px; font-size: 23px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.mlist .mrow img { width: 32px; height: 32px; }
+.mempty { margin: 80px auto; font-size: 24px; color: var(--ink-3); }
+.mfoot { margin-top: 14px; font-size: 15px; color: var(--ink-3); }
+
 /* ---------- top bar ---------- */
 .topbar { position: absolute; left: 96px; right: 96px; top: 54px; display: flex; justify-content: space-between; align-items: center; }
 .greet { display: flex; align-items: center; gap: 16px; font-size: 22px; color: var(--ink); transition: opacity .6s var(--ease); }
@@ -224,6 +268,7 @@ body.serif .settings-title { font-weight: 400; }
         <button class="chip round" data-focus id="gear" aria-label="Settings"></button>
       </div>
     </header>
+    <aside class="matches empty" id="matches" data-focus><div class="mcore" id="mcore"></div></aside>
   </div>
 
   <div class="ui">
@@ -261,6 +306,7 @@ body.serif .settings-title { font-weight: 400; }
 <script src="../shared/look.js"></script>
 <script src="../shared/remote.js"></script>
 <script src="../shared/athan.js" data-audio="../assets/athan.mp3"></script>
+<script src="../shared/matches.js"></script>
 <script src="../shared/settings.js"></script>
 <script src="../shared/sky.js"></script>
 <script>
@@ -468,6 +514,84 @@ body.serif .settings-title { font-weight: 400; }
       el.classList.toggle('next', !!p.isNext); el.classList.toggle('past', p.past && !p.isNext);
     });
   }
+
+  /* ---------- matches of the day ---------- */
+  const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  function mrow(m, wide) {
+    const c = TV.matches.comp(m.comp) || { tag: '' };
+    const t = m.next ? `<span class="t">${new Date(m.start).toLocaleDateString('en-GB', { weekday: 'short' })}</span>`
+      : m.state === 'live' ? `<span class="t live">${esc(m.min)}</span>` : m.state === 'post' ? '<span class="t">FT</span>'
+      : m.state === 'off' ? '<span class="t">PPD</span>' : `<span class="t">${TV.fmt.time(new Date(m.start))}</span>`;
+    const sc = m.next ? TV.fmt.time(new Date(m.start)) : m.state === 'pre' || m.state === 'off' ? '–' : `${esc(m.h.s)}–${esc(m.a.s)}`;
+    const img = x => x.logo ? `<img src="${esc(x.logo)}" alt="">` : '';
+    return `<div class="mrow ${m.state}${m.comp === 'mar' ? ' mar' : ''}${m.fav ? ' fav' : ''}${m.next ? ' next' : ''}">${t}<span class="h"><b>${esc(m.h.code)}</b>${img(m.h)}</span><span class="sc">${sc}</span><span class="a">${img(m.a)}<b>${esc(m.a.code)}</b></span>${wide ? '' : `<span class="tag">${c.tag}</span>`}</div>`;
+  }
+  let mHtml = '';
+  function paintMatches(feed) {
+    const all = feed ? feed.card || feed.list || [] : [], list = all.slice(0, 3);
+    const more = all.length > 3 ? `+${all.length - 3} more` : '';
+    const html = list.length ? `<div class="mhead"><span class="eyebrow">${feed.off ? 'Matches · ' + TV.matches.label(feed.off) : 'Matches today'}</span><span class="mmore">${more}</span></div>${list.map(m => mrow(m)).join('')}` : '';
+    if (html === mHtml) return;       // nothing changed: no repaint
+    mHtml = html;
+    $('mcore').innerHTML = html;
+    $('matches').classList.toggle('empty', !list.length);
+    if (mLayer && mLayer.classList.contains('open')) renderPanel();
+  }
+
+  // full list: built when opened, emptied when closed (holds no memory while hidden)
+  let mLayer = null, mOff = 0, mReturn = null;
+  function buildPanel() {
+    mLayer = document.createElement('div');
+    mLayer.className = 'matches-layer layer';
+    mLayer.innerHTML = `<div class="mscrim"></div><div class="mpanel">
+      <div class="mtop"><div class="mtitle">Matches</div><button class="mdaybtn" data-focus data-cycle><i>‹</i><span id="mday"></span><i>›</i></button></div>
+      <div class="mlist" id="mlist"></div>
+      <div class="mfoot">◀ ▶ change day · ▲ ▼ scroll · Back to close</div></div>`;
+    $('stage').appendChild(mLayer);
+    const btn = mLayer.querySelector('.mdaybtn');
+    btn.addEventListener('cycle', e => { const n = Math.max(-1, Math.min(6, mOff + e.detail)); if (n !== mOff) { mOff = n; renderPanel(); } });
+    mLayer.querySelector('.mscrim').addEventListener('click', closePanel);
+    mLayer.addEventListener('close', closePanel);
+    document.addEventListener('keydown', e => {
+      if (!mLayer.classList.contains('open') || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      $('mlist').scrollTop += e.key === 'ArrowDown' ? 300 : -300;
+    }, true);
+  }
+  async function renderPanel() {
+    const off = mOff;
+    $('mday').textContent = TV.matches.label(off);
+    const list = await TV.matches.load(off);
+    if (off !== mOff || !mLayer.classList.contains('open')) return;
+    const groups = TV.matches.COMPS.map(c => [c, list.filter(m => m.comp === c.id).sort((a, b) => a.start - b.start)]).filter(g => g[1].length);
+    if (!groups.length) { $('mlist').innerHTML = `<div class="mempty">No matches ${off === 0 ? 'today' : 'on this day'} in your competitions.</div>`; return; }
+    // two balanced columns
+    const cols = [[], []], h = [0, 0];
+    for (const g of groups) { const i = h[0] <= h[1] ? 0 : 1; cols[i].push(g); h[i] += g[1].length + 1.5; }
+    $('mlist').innerHTML = cols.map(col => `<div class="mcol">${col.map(([c, ms]) =>
+      `<div class="mgroup"><h3><span>${c.tag}</span>${c.name}</h3>${ms.map(m => mrow(m, true)).join('')}</div>`).join('')}</div>`).join('');
+    $('mlist').scrollTop = 0;
+  }
+  function openPanel() {
+    if (!mLayer) buildPanel();
+    const feed = TV.matches.feed;
+    mOff = feed ? feed.off : 0;
+    mReturn = TV.remote.current;
+    mLayer.classList.add('open');
+    TV.remote.focus(mLayer.querySelector('.mdaybtn'));
+    $('mlist').innerHTML = '';
+    renderPanel();
+  }
+  function closePanel() {
+    if (!mLayer || !mLayer.classList.contains('open')) return;
+    mLayer.classList.remove('open');
+    setTimeout(() => { if (!mLayer.classList.contains('open')) $('mlist').innerHTML = ''; }, 400);
+    TV.remote.reset(); TV.remote.focus(mReturn);
+  }
+  $('matches').addEventListener('click', openPanel);
+  document.addEventListener('tv:matches', e => paintMatches(e.detail));
+  paintMatches(TV.matches.feed); // last known matches right away, then fresh data
+  TV.matches.start();
 
   TV.start({ onTimes, onTick });
   TV.sky.start($('sky'), { scene: 'dunes', photoHost: $('photos') });

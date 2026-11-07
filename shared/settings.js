@@ -8,6 +8,7 @@ window.TV = window.TV || {};
   const save = () => { TV.saveSettings(); TV.look && TV.look.apply(); };
   const onOff = v => v ? 'On' : 'Off';
   const BOOL = () => [true, false];
+  let mt = 0; // matches refetch, debounced while toggling
 
   // simple setting: key + list of options + label for each
   const opt = (label, key, opts, show, after) => ({ label, opts, get: () => S()[key], set: v => { S()[key] = v; after && after(v); }, show });
@@ -40,6 +41,11 @@ window.TV = window.TV || {};
         { label: 'Athan over other apps', action: () => window.Horizon.requestOverlay(), show: () => window.Horizon.canOverlay() ? 'Allowed' : 'Press OK to allow' },
         { label: 'Android TV settings', action: () => window.Horizon.openTvSettings(), show: () => 'Press OK' },
       ] : []),
+    ] },
+    { id: 'matches', name: 'Matches', icon: 'ball', rows: () => [
+      opt('Matches card', 'matches', BOOL, onOff, () => TV.matches.refresh()),
+      ...TV.matches.COMPS.map(c => ({ label: c.name, opts: BOOL, get: () => (S().matchComps || {})[c.id] !== false,
+        set: v => { S().matchComps = { ...(S().matchComps || {}), [c.id]: v }; clearTimeout(mt); mt = setTimeout(() => TV.matches.refresh(true), 800); }, show: onOff })),
     ] },
     { id: 'prayer', name: 'Prayer times', icon: 'book', rows: () => [
       { label: 'Location', opts: () => ['auto', ...TV.CITIES.map((_, i) => i)],

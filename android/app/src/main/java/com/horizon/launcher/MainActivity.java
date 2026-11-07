@@ -75,6 +75,7 @@ public class MainActivity extends Activity {
                 Uri u = req.getUrl();
                 String host = u.getHost();
                 if ("fonts.googleapis.com".equals(host) || "fonts.gstatic.com".equals(host)) return font(u);
+                if ("a.espncdn.com".equals(host) && u.getPath() != null && u.getPath().startsWith("/combiner/")) return font(u); // club crests, kept on disk
                 if (!HOST.equals(host)) return null;
                 return serve(u);
             }
@@ -175,14 +176,14 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Google Fonts, kept on the TV forever after the first download. After standby the Wi-Fi
+     * Google Fonts and club crests, kept on the TV forever after the first download. After standby the Wi-Fi
      * often isn't back yet, and the fonts would otherwise be fetched again (the CSS expires daily).
      */
     private WebResourceResponse font(Uri u) {
         String url = u.toString();
         boolean css = "fonts.googleapis.com".equals(u.getHost());
         String path = u.getPath() == null ? "" : u.getPath();
-        String mime = css ? "text/css" : path.endsWith(".woff2") ? "font/woff2" : path.endsWith(".woff") ? "font/woff" : "font/ttf";
+        String mime = "a.espncdn.com".equals(u.getHost()) ? "image/png" : css ? "text/css" : path.endsWith(".woff2") ? "font/woff2" : path.endsWith(".woff") ? "font/woff" : "font/ttf";
         File dir = new File(getFilesDir(), "fonts");
         File file = new File(dir, sha1(url));
         byte[] body = null;

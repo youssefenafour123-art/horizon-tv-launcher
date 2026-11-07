@@ -56,6 +56,7 @@ window.TV = window.TV || {};
     b.toggle('no-verse', !s.verse);
     b.toggle('no-timeline', !s.timeline);
     b.toggle('no-parallax', !s.parallax);
+    b.toggle('no-matches', s.matches === false);
   }
 
   document.addEventListener('tv:phase', e => { phase = e.detail; if (TV.settings.accent === 'auto') apply(); });
@@ -63,7 +64,7 @@ window.TV = window.TV || {};
   Object.assign(TV.settings, Object.assign({
     font: 'modern', clockSize: 'l', clockWeight: 'thin', accent: 'auto', seconds: true,
     greeting: true, verse: true, verseEvery: 30, appOrder: [], timeline: true, idle: 1, wallMode: 'live', dim: 0, parallax: !window.Horizon, // parallax moves the whole screen: off by default on the TV
-    athanVol: 1, athanOn: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
+    matches: true, matchComps: {}, athanVol: 1, athanOn: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
   }, TV.settings));
 
   TV.look = { FONTS, SIZES, WEIGHTS, ACCENTS, apply };
