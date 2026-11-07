@@ -76,6 +76,7 @@ public class MainActivity extends Activity {
                 String host = u.getHost();
                 if ("fonts.googleapis.com".equals(host) || "fonts.gstatic.com".equals(host)) return font(u);
                 if ("a.espncdn.com".equals(host) && u.getPath() != null && u.getPath().startsWith("/combiner/")) return font(u); // club crests, kept on disk
+                if ("r2.thesportsdb.com".equals(host) && u.getPath() != null && u.getPath().endsWith("/tiny")) return font(u);
                 if (!HOST.equals(host)) return null;
                 return serve(u);
             }
@@ -183,7 +184,7 @@ public class MainActivity extends Activity {
         String url = u.toString();
         boolean css = "fonts.googleapis.com".equals(u.getHost());
         String path = u.getPath() == null ? "" : u.getPath();
-        String mime = "a.espncdn.com".equals(u.getHost()) ? "image/png" : css ? "text/css" : path.endsWith(".woff2") ? "font/woff2" : path.endsWith(".woff") ? "font/woff" : "font/ttf";
+        String mime = "a.espncdn.com".equals(u.getHost()) || "r2.thesportsdb.com".equals(u.getHost()) ? "image/png" : css ? "text/css" : path.endsWith(".woff2") ? "font/woff2" : path.endsWith(".woff") ? "font/woff" : "font/ttf";
         File dir = new File(getFilesDir(), "fonts");
         File file = new File(dir, sha1(url));
         byte[] body = null;

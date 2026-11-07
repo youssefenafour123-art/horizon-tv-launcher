@@ -47,21 +47,21 @@ body.idle .ui.fade { opacity: 0; transform: translateY(26px); pointer-events: no
 body.athan-on .ui { opacity: 0; }
 
 /* ---------- matches of the day: a quiet card under the prayer card (static paint: costs nothing per frame) ---------- */
-.matches { position: absolute; right: 96px; top: 488px; width: 580px; border-radius: 34px; transition: transform .35s var(--spring); }
-.matches .mcore { padding: 13px 26px 9px; border-radius: 34px; background: linear-gradient(160deg, rgba(22,26,48,.6), rgba(8,10,22,.5)); box-shadow: inset 0 0 0 1px var(--hair); }
+.matches { position: absolute; right: 96px; top: 160px; width: 600px; border-radius: 34px; transition: transform .35s var(--spring); }
+.matches .mcore { padding: 20px 28px 14px; border-radius: 34px; background: linear-gradient(160deg, rgba(22,26,48,.6), rgba(8,10,22,.5)); box-shadow: inset 0 0 0 1px var(--hair); }
 .matches.is-focused { transform: scale(1.025); }
 .matches.is-focused .mcore { box-shadow: inset 0 0 0 2px rgba(255,255,255,.92), 0 0 30px rgba(255,255,255,.12); }
 .matches.empty, body.no-matches .matches { display: none; }
-.mhead { display: flex; justify-content: space-between; align-items: center; height: 24px; margin-bottom: 3px; }
+.mhead { display: flex; justify-content: space-between; align-items: center; height: 28px; margin-bottom: 6px; }
 .mhead .mmore { font-size: 15px; color: var(--ink-3); letter-spacing: .04em; }
-.mrow { display: grid; grid-template-columns: 70px 1fr 74px 1fr 60px; align-items: center; height: 34px; font-size: 21px; font-variant-numeric: tabular-nums; }
+.mrow { display: grid; grid-template-columns: 70px 1fr 74px 1fr 60px; align-items: center; height: 38px; font-size: 22px; font-variant-numeric: tabular-nums; }
 .mrow .t { font-size: 17px; color: var(--ink-2); letter-spacing: .02em; }
 .mrow .t.live { color: #ff7a7a; font-weight: 600; }
 .mrow .t.live::before { content: ''; display: inline-block; width: 7px; height: 7px; margin: 0 7px 2px 0; border-radius: 50%; background: #ff5a5a; box-shadow: 0 0 8px #ff5a5a; vertical-align: middle; }
 .mrow .h, .mrow .a { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .mrow .h { justify-content: flex-end; }
 .mrow b { font-weight: 500; letter-spacing: .03em; }
-.mrow img { width: 26px; height: 26px; object-fit: contain; flex: none; }
+.mrow img { width: 28px; height: 28px; object-fit: contain; flex: none; }
 .mrow .sc { text-align: center; font-weight: 600; color: var(--ink); }
 .mrow.pre .sc { color: var(--ink-3); font-weight: 400; }
 .mrow .tag { text-align: right; font-size: 13px; font-weight: 600; letter-spacing: .12em; color: var(--ink-3); }
@@ -123,22 +123,6 @@ body.no-seconds .clock .sec { display: none; }
 body.no-verse .verse { display: none; }
 
 /* ---------- next prayer ---------- */
-.upnext { position: absolute; right: 96px; top: 160px; width: 580px; padding: 7px; border-radius: 44px; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--hair), 0 30px 80px rgba(0,0,0,.18); }
-.upnext .core { position: relative; border-radius: 37px; padding: 34px 38px 36px; background: linear-gradient(160deg, rgba(22,26,48,.74), rgba(8,10,22,.64)); box-shadow: inset 0 1px 0 rgba(255,255,255,.14); overflow: hidden; }
-.upnext .core::before { content: ''; position: absolute; right: -120px; top: -140px; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(closest-side, var(--accent), transparent); opacity: .22; transition: background 2s; }
-.upnext .row { position: relative; display: flex; justify-content: space-between; align-items: baseline; }
-.upnext .when { font-size: 22px; color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 500; transition: color 2s; }
-.upnext .name { margin-top: 18px; }
-.upnext .name b { font-family: var(--f-display); font-size: 70px; font-weight: 300; letter-spacing: -.03em; line-height: 1; }
-body.serif .upnext .name b { font-weight: 400; letter-spacing: -.01em; }
-.upnext .name .ar { font-size: 50px; font-weight: 500; line-height: 1; }
-.upnext .cd { position: relative; display: flex; align-items: baseline; gap: 14px; margin-top: 30px; }
-.upnext .cd b { font-family: var(--f-display); font-size: 58px; font-weight: 200; letter-spacing: -.035em; font-variant-numeric: tabular-nums; line-height: 1; }
-body.serif .upnext .cd b { font-weight: 400; letter-spacing: 0; }
-.upnext .cd span { font-size: 15px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); }
-.track-bar { position: relative; height: 4px; border-radius: 4px; background: rgba(255,255,255,.14); margin-top: 22px; }
-.track-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; border-radius: 4px; background: linear-gradient(90deg, rgba(255,255,255,.3), var(--accent)); transform-origin: 0 50%; }
-.track-bar u { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.18), 0 0 16px var(--accent); left: 0; }
 
 /* ---------- day timeline ---------- */
 .timeline { position: absolute; left: 96px; right: 96px; top: 664px; height: 96px; transition: opacity .6s var(--ease); }
@@ -247,8 +231,7 @@ body.serif .settings-title { font-weight: 400; }
 
 .toast { background: rgba(255,255,255,.96); color: #0b0f1e; font-weight: 500; }
 
-.topbar, .hero, .upnext, .timeline, .apps { animation: enter .55s var(--ease) both; }
-.upnext { animation-delay: .04s; } .timeline { animation-delay: .08s; } .apps { animation-delay: .12s; }
+.topbar, .hero, .matches, .timeline, .apps { animation: enter .55s var(--ease) both; }
 @keyframes enter { from { opacity: 0; translate: 0 24px; } }
 </style>
 </head>
@@ -280,14 +263,6 @@ body.serif .settings-title { font-weight: 400; }
   </div>
 
   <div class="ui fade">
-    <aside class="upnext">
-      <div class="core">
-        <div class="row"><span class="eyebrow">Next prayer</span><span class="when" id="nt"></span></div>
-        <div class="row name"><b id="nn">—</b><span class="ar" id="na"></span></div>
-        <div class="cd"><b id="cd">--:--</b><span>remaining</span></div>
-        <div class="track-bar"><i id="prog"></i><u id="head"></u></div>
-      </div>
-    </aside>
 
     <section class="timeline">
       <div class="rail"></div><div class="done" id="done"></div>
@@ -488,9 +463,8 @@ body.serif .settings-title { font-weight: 400; }
   }
 
   // write to the page only when a value really changed: an unchanged screen costs nothing
-  const put = (id, v, html) => { const el = $(id); if (el._v === v) return; el._v = v; if (html) el.innerHTML = v; else el.textContent = v; };
-  const setStyle = (id, prop, v) => { const el = $(id); if (el['_' + prop] === v) return; el['_' + prop] = v; el.style[prop] = v; };
-  let barW = 0;
+  const put = (id, v, html) => { const el = $(id); if (!el || el._v === v) return; el._v = v; if (html) el.innerHTML = v; else el.textContent = v; };
+  const setStyle = (id, prop, v) => { const el = $(id); if (!el || el['_' + prop] === v) return; el['_' + prop] = v; el.style[prop] = v; };
   function onTick(s) {
     const n = s.now, g = TV.greeting(n);
     put('greet', g.en); put('greetAr', g.ar);
@@ -498,13 +472,6 @@ body.serif .settings-title { font-weight: 400; }
     put('ap', TV.fmt.ampm(n));
     put('sec', String(n.getSeconds()).padStart(2, '0'));
     put('date', `${TV.fmt.weekday(n)}<i></i><span>${TV.fmt.dayMonth(n)}</span>`, true);
-    put('nn', s.next.name); put('na', s.next.ar);
-    put('nt', `${s.next.tomorrow ? 'Tomorrow' : 'Today'} · ${TV.fmt.time(s.next.time, true)}`);
-    put('cd', TV.fmt.countdown(s.remaining));
-    if (!barW) barW = $('head').parentNode.offsetWidth;
-    const q = Math.round(s.progress * 1000) / 1000; // half-pixel steps: the bars only redraw when they visibly move
-    setStyle('prog', 'transform', `scaleX(${q})`);
-    setStyle('head', 'transform', `translateX(${(q * barW).toFixed(1)}px)`);
     const k = s.showingTomorrow ? 0 : Math.round(pos(n.getTime()) * 2000) / 2000;
     setStyle('done', 'transform', `scaleX(${k})`);
     setStyle('now', 'transform', `translateX(${(k * RAIL).toFixed(1)}px)`);
@@ -528,8 +495,8 @@ body.serif .settings-title { font-weight: 400; }
   }
   let mHtml = '';
   function paintMatches(feed) {
-    const all = feed ? feed.card || feed.list || [] : [], list = all.slice(0, 3);
-    const more = all.length > 3 ? `+${all.length - 3} more` : '';
+    const all = feed ? feed.card || feed.list || [] : [], list = all.slice(0, 10);
+    const more = all.length > 10 ? `+${all.length - 10} more` : '';
     const html = list.length ? `<div class="mhead"><span class="eyebrow">${feed.off ? 'Matches · ' + TV.matches.label(feed.off) : 'Matches today'}</span><span class="mmore">${more}</span></div>${list.map(m => mrow(m)).join('')}` : '';
     if (html === mHtml) return;       // nothing changed: no repaint
     mHtml = html;

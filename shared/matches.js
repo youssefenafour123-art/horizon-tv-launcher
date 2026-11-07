@@ -9,6 +9,7 @@ window.TV = window.TV || {};
   const COMPS = [
     { id: 'mar',  tag: '🇲🇦',  name: 'Morocco', team: 2869, fav: true },
     { id: 'rma',  tag: 'CUP',  name: 'Real Madrid', team: 86, fav: true }, // favorite: also its cup games
+    { id: 'bot',  tag: 'BP',   name: 'Botola Pro', sdb: 4520 }, // not on ESPN: TheSportsDB (free test key)
     { id: 'ucl',  tag: 'UCL',  name: 'Champions League', code: 'uefa.champions' },
     { id: 'uel',  tag: 'UEL',  name: 'Europa League', code: 'uefa.europa' },
     { id: 'uecl', tag: 'UECL', name: 'Conference League', code: 'uefa.europa.conf' },
@@ -53,6 +54,28 @@ window.TV = window.TV || {};
     return m;
   }
 
+  /* ---------- Botola Pro (TheSportsDB): short codes as Moroccan fans write them ---------- */
+  const SDB = 'https://www.thesportsdb.com/api/v1/json/123/';
+  const BOTOLA = [
+    [/wydad casa|^wac|wydad ac/i, 'WAC'], [/raja/i, 'RCA'], [/fus|fath union/i, 'FUS'], [/far\b|forces arm/i, 'FAR'],
+    [/berkane/i, 'RSB'], [/maghreb.*f[eè]s|mas\b/i, 'MAS'], [/kawkab/i, 'KACM'], [/hassania|agadir/i, 'HUSA'],
+    [/tanger|ittihad riadi/i, 'IRT'], [/safi/i, 'OCS'], [/jadid/i, 'DHJ'], [/mekn[eè]s|codm/i, 'CODM'],
+    [/t[ée]touan/i, 'MAT'], [/touarga/i, 'UTS'], [/zemamra/i, 'RCAZ'], [/temara/i, 'WST'], [/tiznit/i, 'AT'],
+    [/mohammedia|chabab moh/i, 'SCCM'], [/soualem/i, 'JSS'], [/oujda|mouloudia/i, 'MCO'], [/khouribga/i, 'OCK'],
+    [/nador|hilal/i, 'CAYB'], [/dcheira/i, 'OD'],
+  ];
+  const short = n => (BOTOLA.find(([r]) => r.test(n)) || [, (n.replace(/^(FC|CA|AS|RC|SC|US|CS)\s+/i, '').match(/[A-Za-zÀ-ÿ]+/) || [''])[0].slice(0, 3).toUpperCase()])[1];
+  function slimSdb(e, comp) {
+    const st = e.strStatus || 'NS';
+    let state = /^(FT|AET|PEN|AP)$/.test(st) ? 'post' : /^(1H|2H|HT|ET|BT|P|LIVE|INT)$/.test(st) ? 'live' : /PST|CANC|ABD|SUSP/.test(st) ? 'off' : 'pre';
+    const min = state === 'live' ? (st === 'HT' ? 'HT' : e.strProgress ? e.strProgress + "'" : st) : state === 'off' ? 'PPD' : '';
+    const side = (name, id, badge, sc) => ({ id: 'sdb' + id, code: short(name || ''), logo: badge ? badge + '/tiny' : '', s: sc == null ? '' : String(sc) });
+    const ts = e.strTimestamp ? Date.parse(e.strTimestamp.replace(/(\+00:00)?$/, 'Z')) : Date.parse(`${e.dateEvent}T${e.strTime || '00:00:00'}Z`);
+    return { id: 'sdb' + e.idEvent, comp: comp.id, start: ts, state, min, fav: false,
+      h: side(e.strHomeTeam, e.idHomeTeam, e.strHomeTeamBadge, e.intHomeScore), a: side(e.strAwayTeam, e.idAwayTeam, e.strAwayTeamBadge, e.intAwayScore) };
+  }
+  const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
   const get = url => fetch(url, { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(r.status));
 
   // favorite teams (Morocco, Real Madrid): their full schedule, every competition; refreshed hourly
@@ -79,7 +102,9 @@ window.TV = window.TV || {};
     for (const c of order) {            // one after another: never a burst of requests on the TV
       if (!on(c)) continue;
       try {
-        const evs = c.team ? await team(c) : ((await get(`${API}${c.code}/scoreboard?dates=${k}`)).events || []).map(e => slim(e, c));
+        const evs = c.team ? await team(c)
+          : c.sdb ? ((await get(`${SDB}eventsday.php?d=${iso(d)}&l=${c.sdb}`)).events || []).map(e => slimSdb(e, c))
+          : ((await get(`${API}${c.code}/scoreboard?dates=${k}`)).events || []).map(e => slim(e, c));
         for (const m of evs) if (m && key(new Date(m.start)) === k && !list.some(x => x.id === m.id)) list.push(m);
       } catch (e) { /* this competition is unavailable right now: show the others */ }
     }
