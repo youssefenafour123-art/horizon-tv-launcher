@@ -48,6 +48,10 @@ window.TV = window.TV || {};
         set: v => { S().matchComps = { ...(S().matchComps || {}), [c.id]: v }; clearTimeout(mt); mt = setTimeout(() => TV.matches.refresh(true), 800); }, show: onOff })),
     ] },
     { id: 'prayer', name: 'Prayer times', icon: 'book', rows: () => [
+      // your mosque's timetable (Mawaqit); set once with: adb shell am start -n com.horizon.launcher/.MainActivity --es mosque <slug>
+      ...(S().mosqueSlug ? [{ label: 'Timetable', opts: () => ['calc', S().mosqueSlug], get: () => S().mosque || 'calc',
+        set: v => { S().mosque = v === 'calc' ? null : v; TV.recompute(); TV.refreshMosque(true); },
+        show: v => v === 'calc' ? 'Calculated' : `Mosque · ${((TV.mosque && TV.mosque.name) || v).split(' - ').pop()}` }] : []),
       { label: 'Location', opts: () => ['auto', ...TV.CITIES.map((_, i) => i)],
         get: () => S().auto ? 'auto' : TV.CITIES.findIndex(c => c.city === (S().location || {}).city),
         set: v => {

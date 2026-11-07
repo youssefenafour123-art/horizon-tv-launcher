@@ -161,6 +161,7 @@ public class MainActivity extends Activity {
     private WebResourceResponse serve(Uri u) {
         String path = u.getPath() == null ? "" : u.getPath();
         try {
+            if (path.startsWith("/mawaqit/") && path.endsWith(".json")) return mawaqit(path.substring(9, path.length() - 5));
             if (path.startsWith("/icon/")) {
                 byte[] png = Apps.image(this, path.substring(6), "1".equals(u.getQueryParameter("banner")));
                 if (png == null) return notFound();
@@ -272,13 +273,67 @@ public class MainActivity extends Activity {
         if (order != null) js(order);
     }
 
-    /** am start -n com.horizon.launcher/.MainActivity --es order "pkg1,pkg2,…" puts those apps first */
+    /**
+     * am start -n com.horizon.launcher/.MainActivity --es order "pkg1,pkg2,…" puts those apps first;
+     * --es mosque <slug> uses that mosque's Mawaqit timetable (mawaqit.net/fr/m/<slug>), --es mosque off goes back to calculated
+     */
     private static String orderJs(Intent i) {
-        String order = i == null ? null : i.getStringExtra("order");
-        if (order == null) return null;
-        org.json.JSONArray ids = new org.json.JSONArray();
-        for (String p : order.split(",")) if (!p.trim().isEmpty()) ids.put(p.trim());
-        return "window.TV && TV.setAppOrder(" + ids + ")";
+        if (i == null) return null;
+        StringBuilder js = new StringBuilder();
+        String order = i.getStringExtra("order");
+        if (order != null) {
+            org.json.JSONArray ids = new org.json.JSONArray();
+            for (String p : order.split(",")) if (!p.trim().isEmpty()) ids.put(p.trim());
+            js.append("window.TV && TV.setAppOrder(").append(ids).append(");");
+        }
+        String mosque = i.getStringExtra("mosque");
+        if (mosque != null) {
+            String slug = mosque.trim().toLowerCase().replaceAll("[^a-z0-9-]", "");
+            js.append("window.TV && TV.setMosque(").append("off".equals(slug) || slug.isEmpty() ? "null" : org.json.JSONObject.quote(slug)).append(");");
+        }
+        return js.length() == 0 ? null : js.toString();
+    }
+
+    /**
+     * /mawaqit/<slug>.json: the mosque's yearly timetable, taken from its public Mawaqit page and kept on disk.
+     * Refreshed at most every 12 hours; if the TV is offline the saved copy is served.
+     */
+    private WebResourceResponse mawaqit(String slug) {
+        slug = slug.toLowerCase().replaceAll("[^a-z0-9-]", "");
+        if (slug.isEmpty()) return notFound();
+        File file = new File(getFilesDir(), "mawaqit-" + slug + ".json");
+        byte[] body = null;
+        if (!file.isFile() || System.currentTimeMillis() - file.lastModified() > 12 * 3600_000L) {
+            try {
+                HttpURLConnection c = (HttpURLConnection) new URL("https://mawaqit.net/fr/m/" + slug).openConnection();
+                c.setConnectTimeout(8000); c.setReadTimeout(15000);
+                if (userAgent != null) c.setRequestProperty("User-Agent", userAgent);
+                if (c.getResponseCode() == 200) {
+                    String html = new String(readAll(c.getInputStream()), "UTF-8");
+                    int at = html.indexOf("confData = ");
+                    if (at >= 0) {
+                        org.json.JSONObject d = (org.json.JSONObject) new org.json.JSONTokener(html.substring(at + 11)).nextValue();
+                        org.json.JSONObject out = new org.json.JSONObject()
+                                .put("slug", slug).put("name", d.optString("name"))
+                                .put("timezone", d.optString("timezone")).put("lat", d.optDouble("latitude")).put("lng", d.optDouble("longitude"))
+                                .put("jumua", d.opt("jumua")).put("calendar", d.getJSONArray("calendar"))
+                                .put("iqama", d.optJSONArray("iqamaCalendar"));
+                        body = out.toString().getBytes("UTF-8");
+                        File tmp = new File(file.getPath() + ".tmp");
+                        try (java.io.FileOutputStream o = new java.io.FileOutputStream(tmp)) { o.write(body); }
+                        tmp.renameTo(file);
+                    }
+                }
+                c.disconnect();
+            } catch (Exception e) {
+                android.util.Log.w("Horizon", "mawaqit " + slug + ": " + e);
+            }
+        }
+        if (body == null && file.isFile()) {
+            try { body = readAll(new FileInputStream(file)); } catch (IOException ignored) { }
+        }
+        if (body == null) return notFound();
+        return new WebResourceResponse("application/json", "utf-8", new ByteArrayInputStream(body));
     }
 
     @Override

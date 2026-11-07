@@ -96,14 +96,45 @@ window.TV = window.TV || {};
   let hooks = {};
   let dayKey = '';
 
+  /* ---------- your mosque's own timetable (Mawaqit), when one is chosen ----------
+     The TV downloads the mosque's yearly calendar once a day (MainActivity serves /mawaqit/<slug>.json and keeps
+     a copy on disk), so the times match the mosque exactly and keep working offline. */
+  let mosque = store.get('mosque', null);
+  const mosqueOn = () => !!(settings.mosque && mosque && mosque.slug === settings.mosque && mosque.calendar);
+  function mosqueTimes(d) {
+    const day = (mosque.calendar[d.getMonth()] || {})[String(d.getDate())];
+    if (!day || day.length < 6) return null;
+    const at = s => { const [h, m] = String(s).split(':').map(Number); const x = new Date(d); x.setHours(h, m, 0, 0); return x; };
+    const [fajr, sunrise, dhuhr, asr, maghrib, isha] = day.map(at);
+    return { fajr, sunrise, dhuhr, asr, maghrib, isha };
+  }
+  const timesFor = (loc, d) => (mosqueOn() && mosqueTimes(d)) || TV.prayer.getTimes(loc.lat, loc.lng, d, state.method, settings.asr);
+  async function refreshMosque(force) {
+    if (!settings.mosque) return;
+    if (!force && mosqueOn() && Date.now() - (mosque.at || 0) < 864e5) return;
+    try {
+      const r = await fetch(`/mawaqit/${encodeURIComponent(settings.mosque)}.json`, { cache: 'no-store' });
+      if (!r.ok) throw r.status;
+      const j = await r.json();
+      if (!j.calendar || j.calendar.length !== 12) throw 'bad';
+      mosque = { ...j, at: Date.now() };
+      store.set('mosque', mosque);
+      if (state.location) recompute();
+    } catch (e) { /* offline or not on the TV: keep the saved timetable, or the calculated times */ }
+  }
+  setInterval(() => refreshMosque(), 6 * 3600e3);
+
   function recompute() {
+    // with a mosque chosen, its own town and coordinates win over the IP guess (chip, wallpaper sun)
+    if (mosqueOn() && mosque.lat) state.location = { ...state.location, city: String(mosque.name || '').split(' - ').pop() || state.location.city, lat: mosque.lat, lng: mosque.lng };
     const P = TV.prayer, loc = state.location;
     state.method = settings.method || P.methodFor(loc.cc);
     const d = new Date(), y = new Date(d); y.setDate(d.getDate() - 1);
     const tm = new Date(d); tm.setDate(d.getDate() + 1);
-    state.times = P.getTimes(loc.lat, loc.lng, d, state.method, settings.asr);
-    state.yesterday = P.getTimes(loc.lat, loc.lng, y, state.method, settings.asr);
-    state.tomorrow = P.getTimes(loc.lat, loc.lng, tm, state.method, settings.asr);
+    state.times = timesFor(loc, d);
+    state.yesterday = timesFor(loc, y);
+    state.tomorrow = timesFor(loc, tm);
+    state.source = mosqueOn() ? mosque.name : null;
     state.list = P.ORDER.map(k => ({ key: k, name: P.NAMES[k], ar: P.AR[k], time: state.times[k], salah: k !== 'sunrise' }));
     dayKey = d.toDateString();
     state.showingTomorrow = false;
@@ -240,7 +271,7 @@ window.TV = window.TV || {};
     const s = settings, loc = state.location, out = [];
     if (s.athan) for (let i = 0; i < 7; i++) {
       const d = new Date(); d.setDate(d.getDate() + i);
-      const t = TV.prayer.getTimes(loc.lat, loc.lng, d, state.method, s.asr);
+      const t = timesFor(loc, d);
       for (const k of TV.prayer.SALAH) {
         if (s.athanOn && s.athanOn[k] === false) continue;
         out.push({ k, n: TV.prayer.NAMES[k], ar: TV.prayer.AR[k], t: t[k].getTime(), time: fmt.time(t[k], true), city: loc.city || '' });
@@ -308,14 +339,18 @@ window.TV = window.TV || {};
     state.location = settings.auto ? (store.get('autoLoc') || CITIES[0]) : (settings.location || CITIES[0]);
     recompute();
     setInterval(() => tick(), 1000);
+    setTimeout(() => refreshMosque(), 1500); // the mosque's latest timetable (daily)
     resolveLocation().then(loc => { if (loc && loc !== state.location) { state.location = loc; recompute(); } });
     document.body.classList.add('ready');
   }
 
   Object.assign(TV, {
-    start, state, settings, greeting, LOGO_CDN, NATIVE, nativeApps, saveSettings, recompute, refreshAuto, CITIES, APPS: NATIVE ? nativeApps() : APPS, icon, fmt, toast, openApp, store, verseOfDay, verseNow,
+    start, state, settings, refreshMosque,
+    setMosque(slug) { settings.mosque = settings.mosqueSlug = slug || null; if (!slug) { mosque = null; store.set('mosque', null); } saveSettings(); if (state.location) recompute(); refreshMosque(true); },
+    greeting, LOGO_CDN, NATIVE, nativeApps, saveSettings, recompute, refreshAuto, CITIES, APPS: NATIVE ? nativeApps() : APPS, icon, fmt, toast, openApp, store, verseOfDay, verseNow,
     setLocation(loc) { state.location = loc; recompute(); },
   });
+  Object.defineProperty(TV, 'mosque', { get: () => mosqueOn() ? mosque : null }); // the active mosque timetable, if any
 
   // put these apps first, in this order; all other apps follow in their default order
   TV.setAppOrder = ids => {

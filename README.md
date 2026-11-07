@@ -17,6 +17,7 @@ watching something else.
 |---|---|
 | **Live wallpaper that follows the sky** | Painted scenes (Sahara, Atlas lake, Essaouira coast, rolling hills, medina) whose sky is calculated from the real position of the sun and moon where you live: before dawn, sunrise, midday, afternoon, golden hour, sunset, dusk and night, with stars, the Milky Way, the moon in its real phase, clouds and birds. |
 | **Prayer times, offline** | Calculated on the TV itself (no internet needed after your city is known). Methods: Morocco (Habous), Muslim World League, Umm al-Qura, Egyptian, Gulf, Karachi, ISNA, Algeria, Tunisia, Turkey (Diyanet), France (UOIF). Standard or Hanafi Asr. Picked automatically from your country. |
+| **Your mosque's timetable** | Optional: use the exact times of your mosque from [Mawaqit](https://mawaqit.net) instead of calculating them. Set it once with `adb shell am start -n com.horizon.launcher/.MainActivity --es mosque <slug>` (the slug is the end of the mosque's Mawaqit address, e.g. `bischheim` for mawaqit.net/fr/m/bischheim). The yearly timetable is saved on the TV and refreshed daily; switch between the mosque and calculated times in Settings → Prayer times → Timetable. |
 | **Full athan at each prayer** | Uses Android's alarm system, so it plays even inside Netflix or YouTube, survives reboots, pauses what's playing, and shows a full-screen athan card. Any remote button stops it. Each prayer can be switched on or off separately, and the volume is adjustable. |
 | **Your real apps** | Every installed app with its own TV banner. The selected app gets a glowing edge in its own color. **Hold OK on an app to move it**: ◀ ▶ to move, ▲ to put it first. |
 | **Make it yours** | 7 font styles, clock size and weight, an accent color that can follow the sky, 12/24-hour clock, five scenes, live or still wallpaper, dim level, and a Quran verse that changes through the day. |
@@ -131,6 +132,7 @@ Horizon has **no analytics, no ads, no account and no server of its own**. The o
 
 - **Your approximate location**, once, to find your city: from the TV's location if available, otherwise from your IP address via [ipwho.is](https://ipwho.is) (fallback [ipapi.co](https://ipapi.co)). It's stored only on the TV. Choosing a city by hand stops this.
 - **Fonts** from Google Fonts (cached after the first load).
+- **Mosque timetable** (only if you chose a mosque): the mosque's public Mawaqit page, about twice a day.
 - **Football scores**: [ESPN](https://www.espn.com)'s public scoreboard and [TheSportsDB](https://www.thesportsdb.com) (Botola Pro). Only competition and date are sent; nothing about you. Turn the card off in Settings → Matches and these stop.
 
 | Permission | Why |
