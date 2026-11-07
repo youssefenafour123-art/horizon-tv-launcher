@@ -67,7 +67,7 @@ You need a computer on the same Wi-Fi as the TV, plus Google's free **adb** tool
 2. **On the computer**:
    ```bash
    adb connect 192.168.1.40:5555        # your TV's IP; accept the prompt on the TV
-   adb install Horizon-1.2.apk
+   adb install Horizon-1.3.apk
    ```
 3. Open **Horizon** from the TV's app list. On first launch, allow location if asked (used only to pick your city; you can also choose a city by hand).
 
