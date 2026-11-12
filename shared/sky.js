@@ -351,21 +351,50 @@ window.TV = window.TV || {};
      Each image is 2560×1440 in wallpapers/photos or wallpapers/ai. It is decoded only to repaint the still layer
      (when the light changes), then released, so it costs no memory or frames in between. */
   const WALL = '../wallpapers/';
+  // [file, name, time of day it was taken: morning · noon · evening · night]
   const PHOTOS = [
-    ['chaouen-stairs', 'Chefchaouen · blue stairs'], ['chaouen-town', 'Chefchaouen'], ['rif', 'Rif valley'],
-    ['koutoubia', 'Koutoubia · Marrakech'], ['majorelle', 'Jardin Majorelle'], ['hassan2', 'Hassan II Mosque · Casablanca'],
-    ['oudayas', 'Kasbah of the Oudayas · Rabat'], ['fes', 'Fes medina'], ['essaouira', 'Essaouira'],
-    ['benhaddou', 'Aït Benhaddou'], ['todgha', 'Todgha Gorge'], ['atlas-snow', 'High Atlas · snow'],
-    ['erg-sunset', 'Erg Chebbi · sunset'], ['erg-camels', 'Erg Chebbi · caravan'],
+    ['chaouen-town', 'Chefchaouen', 'morning'],
+    ['erg-camels', 'Erg Chebbi · caravan', 'morning'],
+    ['rif', 'Rif valley', 'morning'],
+    ['merzouga-sunrise', 'Merzouga · sunrise', 'morning'],
+    ['erg-sunrise', 'Erg Chebbi · sunrise', 'morning'],
+    ['sahara-morning', 'Sahara · morning', 'morning'],
+    ['pink-sunrise', 'Sunrise · Souss coast', 'morning'],
+    ['poplar-valley', 'Poplar valley · morning', 'morning'],
+    ['chaouen-stairs', 'Chefchaouen · blue stairs', 'noon'],
+    ['koutoubia', 'Koutoubia · Marrakech', 'noon'],
+    ['benhaddou', 'Aït Benhaddou', 'noon'],
+    ['essaouira', 'Essaouira', 'noon'],
+    ['fes', 'Fes medina', 'noon'],
+    ['oudayas', 'Kasbah of the Oudayas · Rabat', 'noon'],
+    ['todgha', 'Todgha Gorge', 'noon'],
+    ['atlas-snow', 'High Atlas · snow', 'noon'],
+    ['majorelle', 'Jardin Majorelle', 'noon'],
+    ['essaouira-beach', 'Essaouira beach', 'noon'],
+    ['hassan2', 'Hassan II Mosque · Casablanca', 'evening'],
+    ['erg-sunset', 'Erg Chebbi · sunset', 'evening'],
+    ['chaouen-dusk', 'Chefchaouen · dusk', 'evening'],
+    ['chaouen-sunset', 'Chefchaouen · sunset', 'evening'],
+    ['jemaa-sunset', 'Jemaa el-Fnaa · sunset', 'evening'],
+    ['koutoubia-sunset', 'Koutoubia · sunset', 'evening'],
+    ['essaouira-sunset', 'Essaouira · sunset', 'evening'],
+    ['massa-sunset', 'Sidi Rabat · ocean sunset', 'evening'],
+    ['middle-atlas', 'Middle Atlas · golden hour', 'evening'],
+    ['kasbah-sunset', 'Kasbah · sunset', 'evening'],
+    ['jemaa-night', 'Jemaa el-Fnaa · night', 'night'],
+    ['koutoubia-night', 'Koutoubia · night', 'night'],
+    ['palmeraie-night', 'Marrakech palm grove · blue hour', 'night'],
+    ['fes-gate-night', 'Bab Boujloud · Fes', 'night'],
+    ['marrakech-night', 'Marrakech · night', 'night'],
   ];
   // generate these with the prompts in wallpapers/ai/PROMPTS.md and save them as wallpapers/ai/<id>.jpg
   const AI = [
-    ['chaouen-dusk', 'Chefchaouen at dusk'], ['riad', 'Riad courtyard'], ['sahara-night', 'Sahara night camp'],
-    ['atlas-dawn', 'Atlas village at dawn'], ['essaouira-storm', 'Essaouira, Atlantic light'], ['fes-tannery', 'Fes from the rooftops'],
-    ['koutoubia-moon', 'Koutoubia under the moon'], ['oasis', 'Draa valley oasis'], ['zellige', 'Zellige & arches'], ['caravan-gold', 'Golden caravan'],
+    ['chaouen-dusk', 'Chefchaouen at dusk', 'evening'], ['riad', 'Riad courtyard', 'noon'], ['sahara-night', 'Sahara night camp', 'night'],
+    ['atlas-dawn', 'Atlas village at dawn', 'morning'], ['essaouira-storm', 'Essaouira, Atlantic light', 'evening'], ['fes-tannery', 'Fes from the rooftops', 'evening'],
+    ['koutoubia-moon', 'Koutoubia under the moon', 'night'], ['oasis', 'Draa valley oasis', 'evening'], ['zellige', 'Zellige & arches', 'noon'], ['caravan-gold', 'Golden caravan', 'evening'],
   ];
-  for (const [id, name] of PHOTOS) SCENES['p-' + id] = { name, kind: 'photo', src: WALL + 'photos/' + id + '.jpg', horizon: 700 };
-  for (const [id, name] of AI) SCENES['a-' + id] = { name, kind: 'ai', src: WALL + 'ai/' + id + '.jpg', horizon: 700 };
+  for (const [id, name, tod] of PHOTOS) SCENES['p-' + id] = { name, tod, kind: 'photo', src: WALL + 'photos/' + id + '.jpg', horizon: 700 };
+  for (const [id, name, tod] of AI) SCENES['a-' + id] = { name, tod, kind: 'ai', src: WALL + 'ai/' + id + '.jpg', horizon: 700 };
 
   /* ---------- sprites ---------- */
   function sprite(r, stops) {
@@ -437,6 +466,8 @@ window.TV = window.TV || {};
     const night = clamp((-sm.sun.alt - 2) / 12, 0, 1);
     const warm = clamp(1 - Math.abs(sm.sun.alt - 1) / 9, 0, 1);
     st = { ...sm, p, night, warm, evening: eBlend, date };
+    const sc = SCENES[scene];
+    if (sc && sc.src && sc.tod && sc.tod !== tod() && cv && !asleep && TV.sky && TV.sky.list(sc.kind).some(k => SCENES[k].tod === tod())) setTimeout(nextPhoto, 0);
     const ph = phaseOf(sm.sun.alt, evening);
     if (ph !== phase) { phase = ph; document.dispatchEvent(new CustomEvent('tv:phase', { detail: ph })); tryPhoto(ph); }
     if (p.s <= 0 && milky) { milky.width = milky.height = 0; milky = null; }
@@ -659,18 +690,24 @@ window.TV = window.TV || {};
     try { return skyCache.getContext('2d').getImageData(4, 4, 1, 1).data[3] === 0; } catch (e) { return false; }
   }
 
-  /* ---------- photos change on their own: every hour by default (Settings → Wallpaper → Photo changes) ----------
-     It walks through the category in a shuffled order without repeats, and fades between photos. */
-  let order = [];
+  /* ---------- photos follow the time of day ----------
+     Morning, midday, evening and night each have their own photos. When the time of day changes, the wallpaper moves
+     to a photo taken at that time; within it, a new photo every hour (Settings → Wallpaper → Photo changes), shuffled
+     without repeats, with one short fade. */
+  const tod = () => !st ? 'noon' : st.sun.alt < -6 ? 'night' : st.sun.alt >= 12 ? 'noon' : st.sun.az < 180 ? 'morning' : 'evening';
+  let order = [], switching = false;
   function nextPhoto() {
-    const kind = SCENES[scene].kind, all = TV.sky.list(kind);
-    if (all.length < 2) return;
+    if (switching) return;
+    const kind = SCENES[scene].kind, every = TV.sky.list(kind), now = tod();
+    const timed = every.filter(k => SCENES[k].tod === now), all = timed.length ? timed : every;   // none for this time yet: any
+    if (!all.length || (all.length === 1 && all[0] === scene)) return;
     order = order.filter(k => all.includes(k) && k !== scene);
     if (!order.length) { order = all.filter(k => k !== scene); for (let i = order.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [order[i], order[j]] = [order[j], order[i]]; } }
     const next = order.shift();
+    switching = true;
     cv.style.transition = 'opacity .9s ease'; cv.style.opacity = 0;       // one short fade, then everything is still again
     setTimeout(() => {
-      TV.sky.setScene(next);
+      TV.sky.setScene(next); switching = false;
       if (TV.settings) { TV.settings.scenes = { ...(TV.settings.scenes || {}), [location.pathname]: next }; TV.saveSettings && TV.saveSettings(); }
       setTimeout(() => { cv.style.opacity = 1; }, 450);
     }, 950);
@@ -728,7 +765,7 @@ window.TV = window.TV || {};
     // scenes you can pick in a category: painted, photo, ai (only the AI paintings you have added)
     list(kind) { return Object.keys(SCENES).filter(k => SCENES[k].kind === kind && (kind !== 'ai' || aiReady.has(k))); },
     credit(k = scene) { return credits[k] || null; },
-    nextPhoto,
+    nextPhoto, get timeOfDay() { return tod(); },
     rebuild, sleep,
     wake() { setTimeout(wake, 150); }, // after the first frame is back on screen
     setMode(m) { mode = m; dirty = true; tryPhoto(phase); },
