@@ -7,7 +7,7 @@ watching something else.
 
 ![Horizon at night](docs/screenshots/home-night.jpg)
 
-**[⬇ Download the latest APK](https://github.com/youssefenafour123-art/horizon-tv-launcher/releases/latest)** · 2.2 MB · Android 7.0+ · no ads, no tracking, no account
+**[⬇ Download the latest APK](https://github.com/youssefenafour123-art/horizon-tv-launcher/releases/latest)** · 20 MB · Android 7.0+ · no ads, no tracking, no account
 
 ---
 
@@ -69,7 +69,7 @@ You need a computer on the same Wi-Fi as the TV, plus Google's free **adb** tool
 2. **On the computer**:
    ```bash
    adb connect 192.168.1.40:5555        # your TV's IP; accept the prompt on the TV
-   adb install Horizon-1.5.apk
+   adb install Horizon-1.6.apk
    ```
 3. Open **Horizon** from the TV's app list. On first launch, allow location if asked (used only to pick your city; you can also choose a city by hand).
 
