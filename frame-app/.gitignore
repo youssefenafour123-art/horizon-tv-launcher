@@ -1,0 +1,7 @@
+# Android build output and local machine config
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+__pycache__/

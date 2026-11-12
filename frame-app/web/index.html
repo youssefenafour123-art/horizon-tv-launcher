@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Riwaq</title>
+<link rel="stylesheet" href="riwaq.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- the wall: the artwork in its frame -->
+  <main id="wall">
+    <div id="stage"></div>
+    <div id="plaque" class="plaque"><div class="p-title"></div><div class="p-by"></div></div>
+    <div id="hint" class="hint"><span><b>OK</b> Gallery</span><span><b>▲</b> Frame &amp; wall</span><span><b>◀ ▶</b> Browse</span></div>
+  </main>
+
+  <!-- gallery -->
+  <section id="gallery" class="layer" style="display:none">
+    <header class="g-head">
+      <div class="brand">
+        <svg viewBox="0 0 120 120"><path d="M30 112V70A36 36 0 1 1 90 70V112" fill="none" stroke="#C9A15B" stroke-width="7"/><circle cx="60" cy="74" r="11" fill="#E0B46A"/><path d="M42 93H78M49 102H71" stroke="#C9A15B" stroke-width="4" stroke-linecap="round"/></svg>
+        <span class="lat">RIWAQ</span><span class="ar">رواق</span>
+      </div>
+      <button class="pill" id="open-style" data-focus>Frame &amp; wall</button>
+    </header>
+    <div class="g-hero">
+      <div class="g-info">
+        <div class="g-eyebrow"></div>
+        <h1 class="g-title"></h1>
+        <div class="g-by"></div>
+        <div class="g-where"></div>
+        <div class="g-live"></div>
+      </div>
+      <div class="g-preview"><img alt=""></div>
+    </div>
+    <div class="g-rows"><div class="g-rows-in"></div></div>
+  </section>
+
+  <!-- frame & wall -->
+  <aside id="style" class="layer">
+    <h2>Frame &amp; wall</h2>
+    <div class="s-list"></div>
+    <p class="s-foot">◀ ▶ to change · Back to close</p>
+  </aside>
+
+</div>
+<script src="catalog.js"></script>
+<script src="remote.js"></script>
+<script src="live.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

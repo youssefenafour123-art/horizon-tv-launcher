@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Riwaq mark: a Moroccan horseshoe arch (the gallery), a low sun and its reflection (the art beneath it) -->
+  <path d="M30 112V70A36 36 0 1 1 90 70V112" fill="none" stroke="#C9A15B" stroke-width="6" stroke-linecap="square"/>
+  <circle cx="60" cy="74" r="10" fill="#E0B46A"/>
+  <path d="M42 92H78M48 100H72M54 108H66" stroke="#C9A15B" stroke-width="3" stroke-linecap="round"/>
+</svg>

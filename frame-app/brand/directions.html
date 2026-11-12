@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Art display — three name directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500&family=Marcellus&family=Amiri:wght@400;700&family=Karla:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #0b0b0c; color: #eee; font: 15px/1.5 'Inter Tight', sans-serif; padding: 48px 0 80px; }
+  .intro { width: 1440px; margin: 0 auto 36px; color: #9a978f; }
+  .intro h1 { font: 500 28px 'Inter Tight'; color: #f1eee8; letter-spacing: -.01em; }
+  .board { width: 1440px; height: 810px; margin: 0 auto 56px; position: relative; overflow: hidden; border-radius: 6px; display: grid; grid-template-columns: 520px 1fr; }
+  .tag { position: absolute; top: 22px; right: 28px; font: 500 12px 'Inter Tight'; letter-spacing: .18em; text-transform: uppercase; opacity: .55; }
+  .left { padding: 64px 56px; display: flex; flex-direction: column; }
+  .mark { width: 120px; height: 120px; }
+  .word { margin-top: 28px; }
+  .tagline { margin-top: 14px; font-size: 17px; opacity: .78; max-width: 380px; }
+  .why { margin-top: 22px; font-size: 14px; opacity: .62; max-width: 400px; line-height: 1.6; }
+  .row { margin-top: auto; display: flex; gap: 18px; align-items: flex-end; }
+  .icon { width: 96px; height: 96px; border-radius: 22px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  .banner { width: 192px; height: 108px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  .cap { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .5; margin-top: 8px; }
+  .sw { display: flex; gap: 8px; margin-top: 26px; }
+  .sw i { width: 46px; height: 46px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .right { position: relative; }
+  .wall { position: absolute; inset: 0; }
+  .frame { position: absolute; left: 50%; top: 46%; transform: translate(-50%,-50%); width: 720px; height: 405px; }
+  .frame .art { position: absolute; overflow: hidden; }
+  .frame svg { width: 100%; height: 100%; display: block; }
+  .strip { position: absolute; left: 60px; right: 60px; bottom: 44px; display: flex; gap: 14px; align-items: flex-end; }
+  .thumb { width: 132px; height: 74px; border-radius: 4px; overflow: hidden; position: relative; flex: none; opacity: .8; }
+  .thumb.on { width: 168px; height: 94px; opacity: 1; }
+  .thumb svg { width: 100%; height: 100%; display: block; }
+  .live { position: absolute; left: 6px; top: 6px; font: 600 9px 'Inter Tight'; letter-spacing: .12em; padding: 2px 6px; border-radius: 3px; }
+  .meta { position: absolute; left: 60px; bottom: 156px; }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>Three directions for the art display app</h1>
+  <p>Each board shows the name, logo, app icon, TV banner, colours, typography and how the picker would feel on the wall. Pick one (or mix: a name from one, a look from another).</p>
+</div>
+
+<!-- shared art pieces, drawn once and reused -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2a4d"/><stop offset=".55" stop-color="#b8707a"/><stop offset="1" stop-color="#f6c08a"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b5f86"/><stop offset="1" stop-color="#1b2140"/></linearGradient>
+    <linearGradient id="noon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc3d9"/><stop offset="1" stop-color="#eadfc8"/></linearGradient>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070c1c"/><stop offset="1" stop-color="#25335a"/></linearGradient>
+    <linearGradient id="autumn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9c99a"/><stop offset="1" stop-color="#b9694a"/></linearGradient>
+    <symbol id="art-sea" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <rect width="160" height="90" fill="url(#dusk)"/><circle cx="112" cy="50" r="11" fill="#ffe2b0"/>
+      <rect y="54" width="160" height="36" fill="url(#sea)"/>
+      <path d="M96 58h32M100 63h24M106 68h12" stroke="#ffd9a0" stroke-width="1" opacity=".7"/>
+      <path d="M0 56c20-6 34-4 50 0s30 2 40-2v4H0z" fill="#2c2440" opacity=".8"/>
+    </symbol>
+    <symbol id="art-hills" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <rect width="160" height="90" fill="url(#noon)"/>
+      <ellipse cx="44" cy="22" rx="22" ry="6" fill="#fff" opacity=".8"/><ellipse cx="118" cy="16" rx="16" ry="4" fill="#fff" opacity=".7"/>
+      <path d="M0 58c30-14 60-14 90-2s50 4 70-6v40H0z" fill="#8aa07a"/>
+      <path d="M0 70c40-10 70-6 100 2s45 0 60-4v22H0z" fill="#5d7552"/>
+      <path d="M0 80c50-6 100-4 160 2v8H0z" fill="#3f523b"/>
+    </symbol>
+    <symbol id="art-night" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <rect width="160" height="90" fill="url(#night)"/>
+      <g fill="#fff"><circle cx="20" cy="14" r=".7"/><circle cx="50" cy="26" r=".5"/><circle cx="88" cy="10" r=".6"/><circle cx="140" cy="30" r=".5"/><circle cx="70" cy="40" r=".4"/><circle cx="120" cy="12" r=".7"/></g>
+      <path d="M124 22a9 9 0 1 0 8 13a7 7 0 1 1-8-13z" fill="#f4ecd0"/>
+      <path d="M0 66l20-12 14 8 22-18 26 20 18-10 26 14 34-10v32H0z" fill="#121a30"/>
+    </symbol>
+    <symbol id="art-still" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <rect width="160" height="90" fill="#2a1f1a"/><rect y="62" width="160" height="28" fill="#4a3426"/>
+      <ellipse cx="80" cy="62" rx="40" ry="5" fill="#1a120e" opacity=".6"/>
+      <path d="M66 62c-4-14 2-26 14-26s18 12 14 26z" fill="#7a5a3a"/><circle cx="58" cy="58" r="6" fill="#c2452e"/><circle cx="102" cy="57" r="7" fill="#d9a33a"/><circle cx="94" cy="60" r="4" fill="#9a2f22"/>
+    </symbol>
+    <symbol id="art-autumn" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <rect width="160" height="90" fill="url(#autumn)"/>
+      <g fill="#7b2f1e" opacity=".85"><circle cx="40" cy="40" r="20"/><circle cx="60" cy="34" r="16"/><circle cx="120" cy="44" r="22"/></g>
+      <rect x="47" y="50" width="3" height="30" fill="#3a2418"/><rect x="118" y="56" width="3" height="26" fill="#3a2418"/>
+      <rect y="78" width="160" height="12" fill="#6b3a24"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ================= A · TABLEAU ================= -->
+<section class="board" style="background:#f3eee4;color:#22201c">
+  <div class="tag">Direction A · Gallery classic</div>
+  <div class="left">
+    <svg class="mark" viewBox="0 0 120 120">
+      <rect x="6" y="6" width="108" height="108" fill="none" stroke="#22201c" stroke-width="5"/>
+      <rect x="20" y="20" width="80" height="80" fill="none" stroke="#b08a4a" stroke-width="1.5"/>
+      <path d="M36 40h48M60 40v46" stroke="#22201c" stroke-width="7"/>
+      <path d="M52 86h16" stroke="#22201c" stroke-width="3"/>
+    </svg>
+    <div class="word" style="font:500 72px/1 'Cormorant Garamond';letter-spacing:.14em">TABLEAU</div>
+    <div class="tagline" style="font-family:'Jost';font-weight:300">A gallery on your wall.</div>
+    <div class="why" style="font-family:'Jost'">French for "painting". Feels like a museum label: ivory card, fine serif capitals, a gilt hairline. Calm and timeless, sits quietly next to Horizon.</div>
+    <div class="sw"><i style="background:#f3eee4"></i><i style="background:#22201c"></i><i style="background:#b08a4a"></i><i style="background:#7b2f1e"></i><i style="background:#56604f"></i></div>
+    <div class="row">
+      <div><div class="icon" style="background:#22201c;display:grid;place-items:center"><svg viewBox="0 0 120 120" width="70" height="70"><rect x="6" y="6" width="108" height="108" fill="none" stroke="#f3eee4" stroke-width="6"/><rect x="20" y="20" width="80" height="80" fill="none" stroke="#c9a15b" stroke-width="2"/><path d="M36 40h48M60 40v46" stroke="#f3eee4" stroke-width="8"/></svg></div><div class="cap">App icon</div></div>
+      <div><div class="banner" style="background:#22201c;display:flex;align-items:center;gap:12px;padding:0 18px"><svg viewBox="0 0 120 120" width="44" height="44"><rect x="6" y="6" width="108" height="108" fill="none" stroke="#f3eee4" stroke-width="7"/><path d="M36 40h48M60 40v46" stroke="#f3eee4" stroke-width="9"/></svg><span style="font:500 24px 'Cormorant Garamond';letter-spacing:.14em;color:#f3eee4">TABLEAU</span></div><div class="cap">TV banner</div></div>
+      <div style="margin-left:8px"><div style="font:400 30px 'Cormorant Garamond'">Aa <i>Aa</i></div><div style="font:300 14px 'Jost'">Cormorant Garamond · Jost</div><div class="cap">Type</div></div>
+    </div>
+  </div>
+  <div class="right" style="background:linear-gradient(#e9e2d4,#ddd3c1)">
+    <div class="frame" style="background:#2a2420;padding:16px;box-shadow:0 30px 60px rgba(60,40,20,.35)">
+      <div style="position:absolute;inset:16px;background:#f6f1e7;"></div>
+      <div class="art" style="inset:52px"><svg><use href="#art-sea"/></svg></div>
+    </div>
+    <div class="meta"><div style="font:italic 400 22px 'Cormorant Garamond'">Evening tide</div><div style="font:300 12px 'Jost';letter-spacing:.14em;text-transform:uppercase;opacity:.6">Live · gentle waves · walnut frame, ivory mat</div></div>
+    <div class="strip">
+      <div class="thumb"><svg><use href="#art-hills"/></svg></div>
+      <div class="thumb on" style="outline:2px solid #b08a4a;outline-offset:4px"><svg><use href="#art-sea"/></svg><span class="live" style="background:#f3eee4;color:#22201c">LIVE</span></div>
+      <div class="thumb"><svg><use href="#art-still"/></svg></div>
+      <div class="thumb"><svg><use href="#art-night"/></svg></div>
+      <div class="thumb"><svg><use href="#art-autumn"/></svg></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= B · RIWAQ ================= -->
+<section class="board" style="background:#0f2a2c;color:#f1e7d6">
+  <div class="tag">Direction B · Moroccan gallery</div>
+  <div class="left">
+    <svg class="mark" viewBox="0 0 120 120">
+      <path d="M22 112V58a38 38 0 0 1 76 0v54" fill="none" stroke="#c9a15b" stroke-width="6"/>
+      <path d="M34 112V60a26 26 0 0 1 52 0v52" fill="#16393b"/>
+      <circle cx="60" cy="74" r="9" fill="#e0b46a"/>
+      <path d="M34 88h52M40 96h40M46 104h28" stroke="#c9a15b" stroke-width="2.5"/>
+      <path d="M60 10l3 6 6-3-3 6 6 3-6 3 3 6-6-3-3 6-3-6-6 3 3-6-6-3 6-3-3-6 6 3z" fill="#c9a15b"/>
+    </svg>
+    <div class="word" style="display:flex;align-items:baseline;gap:22px"><span style="font:400 70px/1 'Marcellus';letter-spacing:.08em">RIWAQ</span><span style="font:700 52px/1 'Amiri';color:#c9a15b">رواق</span></div>
+    <div class="tagline" style="font-family:'Karla'">Art beneath the arch.</div>
+    <div class="why" style="font-family:'Karla'">A riwaq is the arched gallery around a courtyard, as in the Qarawiyyin or a riad. The arch becomes the frame. Brass, deep teal, plaster and terracotta, with an Arabic name alongside.</div>
+    <div class="sw"><i style="background:#0f2a2c"></i><i style="background:#c9a15b"></i><i style="background:#f1e7d6"></i><i style="background:#b5573a"></i><i style="background:#2f5d57"></i></div>
+    <div class="row">
+      <div><div class="icon" style="background:#0f2a2c;display:grid;place-items:center"><svg viewBox="0 0 120 120" width="76" height="76"><path d="M22 112V58a38 38 0 0 1 76 0v54" fill="none" stroke="#c9a15b" stroke-width="8"/><circle cx="60" cy="74" r="11" fill="#e0b46a"/><path d="M34 92h52M42 102h36" stroke="#c9a15b" stroke-width="4"/></svg></div><div class="cap">App icon</div></div>
+      <div><div class="banner" style="background:linear-gradient(90deg,#0f2a2c,#16393b);display:flex;align-items:center;gap:12px;padding:0 18px"><svg viewBox="0 0 120 120" width="46" height="46"><path d="M22 112V58a38 38 0 0 1 76 0v54" fill="none" stroke="#c9a15b" stroke-width="8"/><circle cx="60" cy="74" r="11" fill="#e0b46a"/></svg><span style="font:400 24px 'Marcellus';letter-spacing:.08em;color:#f1e7d6">RIWAQ</span><span style="font:700 20px 'Amiri';color:#c9a15b">رواق</span></div><div class="cap">TV banner</div></div>
+      <div style="margin-left:8px"><div style="font:400 30px 'Marcellus'">Aa <span style="font-family:Amiri">أب</span></div><div style="font:300 14px 'Karla'">Marcellus · Amiri · Karla</div><div class="cap">Type</div></div>
+    </div>
+  </div>
+  <div class="right" style="background:radial-gradient(120% 90% at 50% 40%,#e9dcc4,#cdb894)">
+    <div class="frame" style="width:520px;height:560px;top:44%">
+      <svg viewBox="0 0 520 560" style="position:absolute;inset:0"><defs><clipPath id="arch"><path d="M40 560V250a220 220 0 0 1 440 0v310z"/></clipPath></defs>
+        <path d="M14 560V250a246 246 0 0 1 492 0v310z" fill="#b08a4a"/><path d="M26 560V250a234 234 0 0 1 468 0v310z" fill="#f1e7d6"/>
+        <g clip-path="url(#arch)"><svg x="-120" y="0" width="760" height="560"><use href="#art-night"/></svg><path d="M300 120a30 30 0 1 0 28 44a24 24 0 1 1-28-44z" fill="#f4ecd0"/><circle cx="170" cy="190" r="1.6" fill="#fff"/><circle cx="380" cy="230" r="1.4" fill="#fff"/><circle cx="230" cy="110" r="1.2" fill="#fff"/></g>
+      </svg>
+    </div>
+    <div class="meta" style="color:#2a2018;left:40px;bottom:150px;width:150px"><div style="font:400 22px 'Marcellus'">Desert night</div><div style="font:400 12px 'Karla';letter-spacing:.14em;text-transform:uppercase;opacity:.6">Live · drifting stars · brass arch</div></div>
+    <div class="strip" style="justify-content:flex-end">
+      <div class="thumb"><svg><use href="#art-sea"/></svg></div>
+      <div class="thumb on" style="outline:2px solid #b5573a;outline-offset:4px"><svg><use href="#art-night"/></svg><span class="live" style="background:#c9a15b;color:#0f2a2c">LIVE</span></div>
+      <div class="thumb"><svg><use href="#art-autumn"/></svg></div>
+      <div class="thumb"><svg><use href="#art-hills"/></svg></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= C · STILL ================= -->
+<section class="board" style="background:#121212;color:#ece8df">
+  <div class="tag">Direction C · Modern quiet</div>
+  <div class="left">
+    <svg class="mark" viewBox="0 0 120 120">
+      <rect x="8" y="8" width="104" height="104" rx="26" fill="none" stroke="#ece8df" stroke-width="5"/>
+      <path d="M26 72c11-6 22-6 34 0s23 6 34 0" fill="none" stroke="#ece8df" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="78" cy="44" r="9" fill="#e8a33d"/>
+    </svg>
+    <div class="word" style="font:400 96px/0.9 'Instrument Serif';letter-spacing:-.01em">Still<span style="color:#e8a33d">.</span></div>
+    <div class="tagline">Art that breathes.</div>
+    <div class="why">A double meaning: still life, and stillness, yet the pieces gently move. Near-black wall, warm chalk, one amber accent. Modern, confident, lets the art do the talking.</div>
+    <div class="sw"><i style="background:#121212"></i><i style="background:#ece8df"></i><i style="background:#e8a33d"></i><i style="background:#3a3a38"></i><i style="background:#7d8b8f"></i></div>
+    <div class="row">
+      <div><div class="icon" style="background:#ece8df;display:grid;place-items:center"><svg viewBox="0 0 120 120" width="72" height="72"><path d="M18 72c13-8 27-8 42 0s29 8 42 0" fill="none" stroke="#121212" stroke-width="8" stroke-linecap="round"/><circle cx="80" cy="40" r="12" fill="#e8a33d"/></svg></div><div class="cap">App icon</div></div>
+      <div><div class="banner" style="background:#121212;box-shadow:0 0 0 1px #2a2a2a,0 10px 30px rgba(0,0,0,.35);display:flex;align-items:center;gap:14px;padding:0 22px"><svg viewBox="0 0 120 120" width="40" height="40"><path d="M14 72c14-8 30-8 46 0s32 8 46 0" fill="none" stroke="#ece8df" stroke-width="9" stroke-linecap="round"/><circle cx="80" cy="38" r="13" fill="#e8a33d"/></svg><span style="font:400 40px 'Instrument Serif';color:#ece8df">Still<span style="color:#e8a33d">.</span></span></div><div class="cap">TV banner</div></div>
+      <div style="margin-left:8px"><div style="font:400 30px 'Instrument Serif'">Aa <span style="font:500 26px 'Inter Tight'">Aa</span></div><div style="font:300 14px 'Inter Tight'">Instrument Serif · Inter Tight</div><div class="cap">Type</div></div>
+    </div>
+  </div>
+  <div class="right" style="background:#1a1a19">
+    <div class="frame" style="width:760px;height:428px;background:#0c0c0c;padding:10px;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+      <div class="art" style="inset:10px"><svg><use href="#art-hills"/></svg></div>
+    </div>
+    <div class="meta"><div style="font:400 26px 'Instrument Serif'">Meadow wind</div><div style="font:400 12px 'Inter Tight';letter-spacing:.14em;text-transform:uppercase;opacity:.5">Live · drifting clouds · thin black frame</div></div>
+    <div class="strip">
+      <div class="thumb"><svg><use href="#art-still"/></svg></div>
+      <div class="thumb on" style="outline:2px solid #e8a33d;outline-offset:4px"><svg><use href="#art-hills"/></svg><span class="live" style="background:#e8a33d;color:#121212">LIVE</span></div>
+      <div class="thumb"><svg><use href="#art-sea"/></svg></div>
+      <div class="thumb"><svg><use href="#art-night"/></svg></div>
+      <div class="thumb"><svg><use href="#art-autumn"/></svg></div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

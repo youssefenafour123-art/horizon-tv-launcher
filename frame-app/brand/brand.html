@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Riwaq — brand sheet</title>
+<style>
+  @font-face { font-family: Marcellus; src: url(../web/fonts/marcellus.woff2) format('woff2'); }
+  @font-face { font-family: Karla; src: url(../web/fonts/karla.woff2) format('woff2'); font-weight: 200 800; }
+  @font-face { font-family: Amiri; src: url(../web/fonts/amiri-ar.woff2) format('woff2'); font-weight: 400; }
+  @font-face { font-family: Amiri; src: url(../web/fonts/amiri-ar-bold.woff2) format('woff2'); font-weight: 700; }
+  :root { --teal: #0F2A2C; --ink: #0A1A1B; --brass: #C9A15B; --sun: #E0B46A; --plaster: #F1E7D6; --clay: #B5573A; --green: #2F5D57; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #08151a; font: 15px/1.55 Karla, sans-serif; color: var(--plaster); padding: 40px 0 80px; }
+  .sheet { width: 1440px; margin: 0 auto; display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+  .card { border-radius: 6px; overflow: hidden; position: relative; padding: 40px; }
+  .label { font: 500 11px Karla; letter-spacing: .2em; text-transform: uppercase; opacity: .55; margin-bottom: 18px; }
+  .hero { grid-column: span 12; height: 560px; background: radial-gradient(90% 120% at 30% 40%, #16393b, var(--teal) 60%, var(--ink)); display: flex; align-items: center; gap: 70px; padding: 0 110px; }
+  .hero .mark { width: 260px; height: 260px; flex: none; }
+  .lock { display: flex; align-items: baseline; gap: 34px; }
+  .lat { font: 400 128px/1 Marcellus; letter-spacing: .1em; }
+  .ar { font: 700 104px/1 Amiri; color: var(--brass); }
+  .hero .tl { margin-top: 26px; font-size: 22px; opacity: .8; letter-spacing: .02em; }
+  .hero .def { margin-top: 18px; font-size: 15px; opacity: .55; max-width: 620px; }
+  .star { position: absolute; right: 48px; top: 40px; width: 28px; opacity: .6; }
+  .pal { grid-column: span 7; background: var(--plaster); color: var(--ink); }
+  .chips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .chip { height: 170px; border-radius: 4px; padding: 14px; display: flex; flex-direction: column; justify-content: flex-end; font-size: 13px; }
+  .chip b { font: 400 17px Marcellus; display: block; }
+  .type { grid-column: span 5; background: var(--ink); }
+  .type .big { font: 400 64px/1 Marcellus; letter-spacing: .04em; }
+  .type .arb { font: 700 54px/1.3 Amiri; color: var(--brass); direction: rtl; }
+  .type p { opacity: .7; margin-top: 8px; }
+  .row { display: flex; gap: 30px; align-items: flex-end; margin-top: 22px; }
+  .on { grid-column: span 4; height: 300px; display: grid; place-items: center; }
+  .on svg { width: 150px; }
+  .app { grid-column: span 6; background: #13272a; display: flex; gap: 40px; align-items: flex-end; }
+  .icon { width: 180px; height: 180px; border-radius: 40px; background: radial-gradient(120% 120% at 30% 20%, #16393b, var(--teal) 70%); display: grid; place-items: center; box-shadow: 0 20px 40px rgba(0,0,0,.4); }
+  .icon svg { width: 128px; }
+  .banner { width: 384px; height: 216px; border-radius: 10px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,.4); }
+  .banner iframe { border: 0; width: 320px; height: 180px; transform: scale(1.2); transform-origin: 0 0; }
+  .cap { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; opacity: .5; margin-top: 12px; }
+  .ui { grid-column: span 6; background: var(--plaster); color: var(--ink); }
+  .ui .demo { display: flex; gap: 16px; margin-top: 6px; }
+  .t { width: 150px; height: 96px; border-radius: 3px; background: linear-gradient(#1d2a4d, #b8707a 60%, #f6c08a); position: relative; }
+  .t.f { outline: 2px solid var(--brass); outline-offset: 5px; }
+  .t i { position: absolute; left: 6px; top: 6px; font: 700 9px Karla; letter-spacing: .12em; font-style: normal; background: var(--brass); color: var(--ink); padding: 2px 6px; border-radius: 2px; }
+  .rules { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 30px; font-size: 14px; }
+  .rules div::before { content: '◆'; color: var(--brass); margin-right: 10px; font-size: 10px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <section class="card hero">
+    <svg class="star" viewBox="0 0 40 40"><path d="M20 2l5 9 9-5-5 9 9 5-9 5 5 9-9-5-5 9-5-9-9 5 5-9-9-5 9-5-5-9 9 5z" fill="#C9A15B"/></svg>
+    <svg class="mark" viewBox="0 0 120 120"><path d="M30 112V70A36 36 0 1 1 90 70V112" fill="none" stroke="#C9A15B" stroke-width="6"/><circle cx="60" cy="74" r="10" fill="#E0B46A"/><path d="M42 92H78M48 100H72M54 108H66" stroke="#C9A15B" stroke-width="3" stroke-linecap="round"/></svg>
+    <div>
+      <div class="lock"><span class="lat">RIWAQ</span><span class="ar">رواق</span></div>
+      <div class="tl">Art beneath the arch.</div>
+      <div class="def"><i>riwāq</i> (n.): the arched gallery that runs around a courtyard, as in the Qarawiyyin in Fez or a riad in Marrakech. The arch is the frame; your wall becomes the gallery.</div>
+    </div>
+  </section>
+
+  <section class="card pal">
+    <div class="label">Colours</div>
+    <div class="chips">
+      <div class="chip" style="background:#0F2A2C;color:#F1E7D6"><b>Riad Teal</b>#0F2A2C</div>
+      <div class="chip" style="background:#0A1A1B;color:#F1E7D6"><b>Night Ink</b>#0A1A1B</div>
+      <div class="chip" style="background:#C9A15B"><b>Brass</b>#C9A15B</div>
+      <div class="chip" style="background:#F1E7D6;box-shadow:inset 0 0 0 1px #0002"><b>Plaster</b>#F1E7D6</div>
+      <div class="chip" style="background:#B5573A;color:#F1E7D6"><b>Terracotta</b>#B5573A</div>
+      <div class="chip" style="background:#2F5D57;color:#F1E7D6"><b>Zellige</b>#2F5D57</div>
+    </div>
+    <div class="rules">
+      <div>Teal and ink carry the interface; the art supplies the colour.</div>
+      <div>Brass is the only accent: focus, the arch, small ornaments.</div>
+      <div>Plaster for light walls and captions on dark.</div>
+      <div>Terracotta and zellige green are wall options, never text.</div>
+    </div>
+  </section>
+
+  <section class="card type">
+    <div class="label">Typography</div>
+    <div class="big">Marcellus</div><p>Titles, the wordmark, artwork names. Capitals get +10% tracking.</p>
+    <div class="row"><div><div style="font:500 30px Karla">Karla</div><p>Labels, credits, settings.</p></div><div><div class="arb">أميري · رواق</div><p style="text-align:right">Amiri, the Arabic voice.</p></div></div>
+  </section>
+
+  <section class="card on" style="background:#0F2A2C"><svg viewBox="0 0 120 120"><path d="M30 112V70A36 36 0 1 1 90 70V112" fill="none" stroke="#C9A15B" stroke-width="6"/><circle cx="60" cy="74" r="10" fill="#E0B46A"/><path d="M42 92H78M48 100H72M54 108H66" stroke="#C9A15B" stroke-width="3" stroke-linecap="round"/></svg></section>
+  <section class="card on" style="background:#F1E7D6"><svg viewBox="0 0 120 120"><path d="M30 112V70A36 36 0 1 1 90 70V112" fill="none" stroke="#0F2A2C" stroke-width="6"/><circle cx="60" cy="74" r="10" fill="#B5573A"/><path d="M42 92H78M48 100H72M54 108H66" stroke="#0F2A2C" stroke-width="3" stroke-linecap="round"/></svg></section>
+  <section class="card on" style="background:#B5573A"><svg viewBox="0 0 120 120"><path d="M30 112V70A36 36 0 1 1 90 70V112" fill="none" stroke="#F1E7D6" stroke-width="6"/><circle cx="60" cy="74" r="10" fill="#F1E7D6"/><path d="M42 92H78M48 100H72M54 108H66" stroke="#F1E7D6" stroke-width="3" stroke-linecap="round"/></svg></section>
+
+  <section class="card app">
+    <div><div class="label">App icon</div><div class="icon"><svg viewBox="0 0 120 120"><path d="M30 112V70A36 36 0 1 1 90 70V112" fill="none" stroke="#C9A15B" stroke-width="7"/><circle cx="60" cy="74" r="11" fill="#E0B46A"/><path d="M42 93H78M49 102H71" stroke="#C9A15B" stroke-width="4" stroke-linecap="round"/></svg></div></div>
+    <div><div class="label">TV banner</div><div class="banner"><img src="banner.svg" style="width:100%;height:100%;display:block" alt="Riwaq TV banner"></div></div>
+  </section>
+
+  <section class="card ui">
+    <div class="label">In the app</div>
+    <div class="demo"><div class="t"></div><div class="t f"><i>LIVE</i></div><div class="t" style="background:linear-gradient(#0a1022,#25335a)"></div></div>
+    <div class="rules">
+      <div>Focus is a brass hairline with breathing room, never a glow.</div>
+      <div>Live pieces carry a small brass LIVE tag.</div>
+      <div>Captions fade in, then step aside for the art.</div>
+      <div>Nothing moves unless it's the art.</div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
