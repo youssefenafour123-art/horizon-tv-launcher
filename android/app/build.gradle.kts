@@ -36,7 +36,7 @@ android {
 val copyWeb by tasks.registering(Sync::class) {
     val root = rootProject.projectDir.parentFile
     from(root) {
-        include("horizon/**", "shared/**", "assets/athan.mp3", "wallpapers/*.jpg", "wallpapers/photos/*.jpg", "wallpapers/photos/credits.json", "wallpapers/ai/*.jpg")
+        include("horizon/**", "shared/**", "assets/athan.mp3", "wallpapers/*.jpg", "wallpapers/paintings/*.jpg", "wallpapers/paintings/credits.json", "wallpapers/ai/*.jpg")
     }
     into(layout.buildDirectory.dir("webassets/web"))
 }

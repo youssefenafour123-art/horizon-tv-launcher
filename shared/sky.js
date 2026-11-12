@@ -330,9 +330,9 @@ window.TV = window.TV || {};
   };
   for (const k in SCENES) SCENES[k].kind = 'painted';
   const aiReady = new Set();       // which AI paintings you have added (checked once at start)
-  let credits = {};                // photographer + license for each real photo
+  let credits = {};                // painter + title for each painting
 
-  let photoReq = 0, landDirty = true;
+  let photoReq = 0, landDirty = true, moonlit = false;
   function paintPhoto(sc) {
     const req = ++photoReq, img = new Image();
     img.src = sc.src;
@@ -340,52 +340,47 @@ window.TV = window.TV || {};
       if (req !== photoReq || asleep || SCENES[scene] !== sc) return;
       const c = landCache.getContext('2d');
       c.globalCompositeOperation = 'source-over';
-      c.drawImage(img, 0, 0, W, H);                                   // 2560×1440 → the 1920×1080 still layer, as taken
+      c.drawImage(img, 0, 0, W, H);                                   // 2560×1440 → the 1920×1080 still layer
+      moonlit = tod() === 'night' && sc.tod !== 'night';
+      if (moonlit) {                                                  // an evening painting at night: gently moonlit
+        c.globalCompositeOperation = 'multiply'; c.fillStyle = 'rgb(92,104,150)'; c.fillRect(0, 0, W, H);
+        c.globalCompositeOperation = 'screen'; c.fillStyle = 'rgba(20,28,60,.18)'; c.fillRect(0, 0, W, H);
+        c.globalCompositeOperation = 'source-over';
+      }
       paintScrim(c);
       img.src = '';                                                   // let the decoded photo go
       landDirty = true;
     }).catch(() => { if (req === photoReq) console.log('HZSKY photo missing ' + sc.src); });
   }
 
-  /* ---------- photo scenes: real photos of Morocco and your AI paintings, with the light of the real time of day ----------
-     Each image is 2560×1440 in wallpapers/photos or wallpapers/ai. It is decoded only to repaint the still layer
+  /* ---------- picture scenes: paintings of Morocco and your AI paintings, chosen to match the time of day ----------
+     Each image is 2560×1440 in wallpapers/paintings or wallpapers/ai. It is decoded only to repaint the still layer
      (when the light changes), then released, so it costs no memory or frames in between. */
   const WALL = '../wallpapers/';
-  // [file, name, time of day it was taken: morning · noon · evening · night]
-  const PHOTOS = [
-    ['chaouen-town', 'Chefchaouen', 'morning'],
-    ['erg-camels', 'Erg Chebbi · caravan', 'morning'],
-    ['rif', 'Rif valley', 'morning'],
-    ['merzouga-sunrise', 'Merzouga · sunrise', 'morning'],
-    ['erg-sunrise', 'Erg Chebbi · sunrise', 'morning'],
-    ['sahara-morning', 'Sahara · morning', 'morning'],
-    ['pink-sunrise', 'Sunrise · Souss coast', 'morning'],
-    ['poplar-valley', 'Poplar valley · morning', 'morning'],
-    ['chaouen-stairs', 'Chefchaouen · blue stairs', 'noon'],
-    ['koutoubia', 'Koutoubia · Marrakech', 'noon'],
-    ['benhaddou', 'Aït Benhaddou', 'noon'],
-    ['essaouira', 'Essaouira', 'noon'],
-    ['fes', 'Fes medina', 'noon'],
-    ['oudayas', 'Kasbah of the Oudayas · Rabat', 'noon'],
-    ['todgha', 'Todgha Gorge', 'noon'],
-    ['atlas-snow', 'High Atlas · snow', 'noon'],
-    ['majorelle', 'Jardin Majorelle', 'noon'],
-    ['essaouira-beach', 'Essaouira beach', 'noon'],
-    ['hassan2', 'Hassan II Mosque · Casablanca', 'evening'],
-    ['erg-sunset', 'Erg Chebbi · sunset', 'evening'],
-    ['chaouen-dusk', 'Chefchaouen · dusk', 'evening'],
-    ['chaouen-sunset', 'Chefchaouen · sunset', 'evening'],
-    ['jemaa-sunset', 'Jemaa el-Fnaa · sunset', 'evening'],
-    ['koutoubia-sunset', 'Koutoubia · sunset', 'evening'],
-    ['essaouira-sunset', 'Essaouira · sunset', 'evening'],
-    ['massa-sunset', 'Sidi Rabat · ocean sunset', 'evening'],
-    ['middle-atlas', 'Middle Atlas · golden hour', 'evening'],
-    ['kasbah-sunset', 'Kasbah · sunset', 'evening'],
-    ['jemaa-night', 'Jemaa el-Fnaa · night', 'night'],
-    ['koutoubia-night', 'Koutoubia · night', 'night'],
-    ['palmeraie-night', 'Marrakech palm grove · blue hour', 'night'],
-    ['fes-gate-night', 'Bab Boujloud · Fes', 'night'],
-    ['marrakech-night', 'Marrakech · night', 'night'],
+  // public-domain paintings of Morocco: [file, title, the light it shows: morning · noon · evening]
+  // (no night paintings: at night the evening ones are shown moonlit)
+  const PAINTINGS = [
+    ['morning-prayer', 'Morning Prayer in the Desert', 'morning'],
+    ['tangier-shore', 'View of Tangier from the Shore', 'morning'],
+    ['fez-market', 'Market in Fez', 'morning'],
+    ['marruecos', 'Morocco, 1849', 'morning'],
+    ['marrakech-camp', 'Camp near Marrakech', 'morning'],
+    ['red-gate', 'The Red Gate, Rabat', 'noon'],
+    ['moorish-sun', 'Moorish Buildings in Sunlight', 'noon'],
+    ['moorish-cloudy', 'Moorish Buildings on a Cloudy Day', 'noon'],
+    ['tetuan', 'Courtyard, Tetuan', 'noon'],
+    ['white-walls', 'White Walls in Sunlight', 'noon'],
+    ['tangier-beach', 'Beach Scene, Tangier', 'noon'],
+    ['rabat-port', 'The Port of Rabat', 'noon'],
+    ['tangier-kasbah', 'The Kasbah of Tangier', 'noon'],
+    ['tangier-market', 'Market in Tangier', 'noon'],
+    ['tiffany', 'Moroccan Scene', 'noon'],
+    ['landing-stage', 'Landing Stage, Morocco', 'noon'],
+    ['camp-morocco', 'Camp in Morocco', 'noon'],
+    ['casbah-tangier', 'The Casbah, Tangier', 'evening'],
+    ['camels-cistern', 'Camels beside a Cistern', 'evening'],
+    ['tangier-view', 'View of Tangier', 'evening'],
+    ['tangier-souk', 'Market of Tangier', 'evening'],
   ];
   // generate these with the prompts in wallpapers/ai/PROMPTS.md and save them as wallpapers/ai/<id>.jpg
   const AI = [
@@ -393,7 +388,7 @@ window.TV = window.TV || {};
     ['atlas-dawn', 'Atlas village at dawn', 'morning'], ['essaouira-storm', 'Essaouira, Atlantic light', 'evening'], ['fes-tannery', 'Fes from the rooftops', 'evening'],
     ['koutoubia-moon', 'Koutoubia under the moon', 'night'], ['oasis', 'Draa valley oasis', 'evening'], ['zellige', 'Zellige & arches', 'noon'], ['caravan-gold', 'Golden caravan', 'evening'],
   ];
-  for (const [id, name, tod] of PHOTOS) SCENES['p-' + id] = { name, tod, kind: 'photo', src: WALL + 'photos/' + id + '.jpg', horizon: 700 };
+  for (const [id, name, tod] of PAINTINGS) SCENES['p-' + id] = { name, tod, kind: 'art', src: WALL + 'paintings/' + id + '.jpg', horizon: 700 };
   for (const [id, name, tod] of AI) SCENES['a-' + id] = { name, tod, kind: 'ai', src: WALL + 'ai/' + id + '.jpg', horizon: 700 };
 
   /* ---------- sprites ---------- */
@@ -467,7 +462,12 @@ window.TV = window.TV || {};
     const warm = clamp(1 - Math.abs(sm.sun.alt - 1) / 9, 0, 1);
     st = { ...sm, p, night, warm, evening: eBlend, date };
     const sc = SCENES[scene];
-    if (sc && sc.src && sc.tod && sc.tod !== tod() && cv && !asleep && TV.sky && TV.sky.list(sc.kind).some(k => SCENES[k].tod === tod())) setTimeout(nextPhoto, 0);
+    if (sc && sc.src && sc.tod && cv && !asleep && TV.sky) {
+      const now = tod(), list = TV.sky.list(sc.kind);
+      const want = list.some(k => SCENES[k].tod === now) ? now : now === 'night' ? 'evening' : null;
+      if (want && sc.tod !== want) setTimeout(nextPhoto, 0);
+      else if ((now === 'night' && sc.tod !== 'night') !== moonlit && performance.now() - lastLand > 2000) paintLand();   // dusk ↔ night on the same painting
+    }
     const ph = phaseOf(sm.sun.alt, evening);
     if (ph !== phase) { phase = ph; document.dispatchEvent(new CustomEvent('tv:phase', { detail: ph })); tryPhoto(ph); }
     if (p.s <= 0 && milky) { milky.width = milky.height = 0; milky = null; }
@@ -699,7 +699,9 @@ window.TV = window.TV || {};
   function nextPhoto() {
     if (switching) return;
     const kind = SCENES[scene].kind, every = TV.sky.list(kind), now = tod();
-    const timed = every.filter(k => SCENES[k].tod === now), all = timed.length ? timed : every;   // none for this time yet: any
+    let timed = every.filter(k => SCENES[k].tod === now);
+    if (!timed.length && now === 'night') timed = every.filter(k => SCENES[k].tod === 'evening');   // night: the evening ones, moonlit
+    const all = timed.length ? timed : every;
     if (!all.length || (all.length === 1 && all[0] === scene)) return;
     order = order.filter(k => all.includes(k) && k !== scene);
     if (!order.length) { order = all.filter(k => k !== scene); for (let i = order.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [order[i], order[j]] = [order[j], order[i]]; } }
@@ -753,11 +755,11 @@ window.TV = window.TV || {};
       if (opts.photoHost) photo = { host: opts.photoHost, base: opts.photoBase || '../wallpapers/', active: false };
       mode = (TV.settings && TV.settings.wallMode) || 'live';
       document.body.classList.add('scrim-baked');
-      if (!SCENES[scene]) scene = 'dunes';
+      if (!SCENES[scene]) scene = String(scene).startsWith('p-') ? 'p-red-gate' : 'dunes';   // a removed photo: a painting instead
       makeClouds(); update(true); requestAnimationFrame(frame);
       // which AI paintings exist, and the photo credits (small files, read once)
       setTimeout(() => {
-        fetch(WALL + 'photos/credits.json').then(r => r.json()).then(list => { for (const x of list) credits['p-' + x.id] = x; }).catch(() => { });
+        fetch(WALL + 'paintings/credits.json').then(r => r.json()).then(list => { for (const x of list) credits['p-' + x.id] = x; }).catch(() => { });
         for (const [id] of AI) fetch(WALL + 'ai/' + id + '.jpg', { method: 'HEAD' }).then(r => { if (r.ok) aiReady.add('a-' + id); }).catch(() => { });
       }, 3000);
     },

@@ -15,7 +15,7 @@ watching something else.
 
 | | |
 |---|---|
-| **Moroccan photos & AI paintings** | Besides the painted live scenes (Sahara, Atlas lake, Essaouira, medina, Aït Benhaddou, Koutoubia, Merzouga caravan…), 33 high-resolution photos of Morocco taken in the morning, at midday, in the evening and at night (Chefchaouen, Hassan II, the Koutoubia, Jemaa el-Fnaa, Fes, Essaouira, Aït Benhaddou, Erg Chebbi, the Atlas…). The wallpaper follows the time of day with a photo taken at that time, and changes to another one every hour (Settings → Wallpaper → Photo changes). Add your own AI paintings with the prompts in [wallpapers/ai/PROMPTS.md](wallpapers/ai/PROMPTS.md). Settings → Wallpaper → Category: Painted · Real photos · AI paintings. |
+| **Paintings of Morocco & AI paintings** | Besides the painted live scenes (Sahara, Atlas lake, Essaouira, medina, Aït Benhaddou, Koutoubia, Merzouga caravan…), 21 public-domain paintings of Morocco by Delacroix, Sargent, Edwin Lord Weeks, Tiffany, Marquet, Ziem and others, each showing a morning, midday or evening light. The wallpaper follows the time of day with a painting of that light (at night the evening ones, gently moonlit) and changes to another one every hour (Settings → Wallpaper → Picture changes). Add your own AI paintings with the prompts in [wallpapers/ai/PROMPTS.md](wallpapers/ai/PROMPTS.md). Settings → Wallpaper → Category: Painted · Paintings of Morocco · AI paintings. |
 | **Live wallpaper that follows the sky** | Painted scenes (Sahara, Atlas lake, Essaouira coast, rolling hills, medina) whose sky is calculated from the real position of the sun and moon where you live: before dawn, sunrise, midday, afternoon, golden hour, sunset, dusk and night, with stars, the Milky Way, the moon in its real phase, clouds and birds. |
 | **Prayer times, offline** | Calculated on the TV itself (no internet needed after your city is known). Methods: Morocco (Habous), Muslim World League, Umm al-Qura, Egyptian, Gulf, Karachi, ISNA, Algeria, Tunisia, Turkey (Diyanet), France (UOIF). Standard or Hanafi Asr. Picked automatically from your country. |
 | **Your mosque's timetable** | Optional: use the exact times of your mosque from [Mawaqit](https://mawaqit.net) instead of calculating them. Set it once with `adb shell am start -n com.horizon.launcher/.MainActivity --es mosque <slug>` (the slug is the end of the mosque's Mawaqit address, e.g. `bischheim` for mawaqit.net/fr/m/bischheim). The yearly timetable is saved on the TV and refreshed daily; switch between the mosque and calculated times in Settings → Prayer times → Timetable. |
@@ -222,55 +222,39 @@ The interface is HTML/CSS/JS, bundled inside the APK and served locally (it work
 
 App names and logos belong to their respective owners. Horizon isn't affiliated with Google, TCL or any app shown.
 
-### Photo credits
+### Painting credits
 
-The photos in `wallpapers/photos/` come from [Wikimedia Commons](https://commons.wikimedia.org), cropped to 16:9 and resized to 2560×1440. They keep their own licenses (not covered by this project's MIT license):
+The paintings in `wallpapers/paintings/` are in the public domain. The images come from [Wikimedia Commons](https://commons.wikimedia.org) (and the museums credited there), cropped to 16:9 and resized to 2560×1440.
 
+**Morning light**
 
-**Morning**
-
-- Chefchaouen: [قصبة شفشاون.jpg](https://commons.wikimedia.org/wiki/File:%D9%82%D8%B5%D8%A8%D8%A9_%D8%B4%D9%81%D8%B4%D8%A7%D9%88%D9%86.jpg) by Mustafa DAHMANI, CC BY-SA 4.0
-- Erg Chebbi · caravan: [Camel Tour on Erg Chebbi riding across the dunes.jpg](https://commons.wikimedia.org/wiki/File:Camel_Tour_on_Erg_Chebbi_riding_across_the_dunes.jpg) by Johannes K Becker, CC BY-SA 3.0
-- Rif valley: [Landscape Chrouda, between Chefchaouen and Oued Laou.jpg](https://commons.wikimedia.org/wiki/File:Landscape_Chrouda,_between_Chefchaouen_and_Oued_Laou.jpg) by Othmane.elam, CC BY-SA 4.0
-- Merzouga · sunrise: [Sunrise on the Merzouga Dunes.jpg](https://commons.wikimedia.org/wiki/File:Sunrise_on_the_Merzouga_Dunes.jpg) by Mustang Joe, CC0
-- Erg Chebbi · sunrise: [Merzouga desert Erg Chebbi.jpg](https://commons.wikimedia.org/wiki/File:Merzouga_desert_Erg_Chebbi.jpg) by Elena Tatiana Chis, CC BY-SA 4.0
-- Sahara · morning: [Sahara Sunrise, Morocco - Flickr - Mustang Joe.jpg](https://commons.wikimedia.org/wiki/File:Sahara_Sunrise,_Morocco_-_Flickr_-_Mustang_Joe.jpg) by Mustang Joe, CC0
-- Sunrise · Souss coast: [Sunrise Sidi Rabat Morocco Oct25 A7CR 08252.jpg](https://commons.wikimedia.org/wiki/File:Sunrise_Sidi_Rabat_Morocco_Oct25_A7CR_08252.jpg) by This Photo was taken by Timothy A. Gonsalves. Feel free to use my photos, but please mention me as the author. I would much appreciate if you send me an email tagooty@yahoo.com or write on my talk page, for my information. Please contact me before commercial use. Please do not upload an edited image here without consulting me. I would like to make corrections only at my own source to ensure that the changes improve the image and are preserved.Otherwise you may upload an edited image with a new name. Please use one of the templates derivative or extract., CC BY-SA 4.0
-- Poplar valley · morning: [Poplar Sunset Douar Chiker Morocco Nov25 A7CR 09360.jpg](https://commons.wikimedia.org/wiki/File:Poplar_Sunset_Douar_Chiker_Morocco_Nov25_A7CR_09360.jpg) by This Photo was taken by Timothy A. Gonsalves. Feel free to use my photos, but please mention me as the author. I would much appreciate if you send me an email tagooty@yahoo.com or write on my talk page, for my information. Please contact me before commercial use. Please do not upload an edited image here without consulting me. I would like to make corrections only at my own source to ensure that the changes improve the image and are preserved.Otherwise you may upload an edited image with a new name. Please use one of the templates derivative or extract., CC BY-SA 4.0
+- *Morning Prayer in the Desert*, Henrik Ankarcrona, 1892: [Morning Prayer in the Desert by Henric Ankarcrona (1892).jpg](https://commons.wikimedia.org/wiki/File:Morning_Prayer_in_the_Desert_by_Henric_Ankarcrona_(1892).jpg)
+- *View of Tangier from the Shore*, Eugène Delacroix: [Eugène Delacroix - Vue de Tanger à partir du bord de la mer.jpg](https://commons.wikimedia.org/wiki/File:Eug%C3%A8ne_Delacroix_-_Vue_de_Tanger_%C3%A0_partir_du_bord_de_la_mer.jpg)
+- *Market in Fez*, Félix Ziem: [Félix Ziem - Marché à Fez - PPP204 - Musée des Beaux-Arts de la ville de Paris.jpg](https://commons.wikimedia.org/wiki/File:F%C3%A9lix_Ziem_-_March%C3%A9_%C3%A0_Fez_-_PPP204_-_Mus%C3%A9e_des_Beaux-Arts_de_la_ville_de_Paris.jpg)
+- *Morocco*, Elizabeth Murray, 1849: [Elizabeth Murray, Marruecos (1849).jpg](https://commons.wikimedia.org/wiki/File:Elizabeth_Murray,_Marruecos_(1849).jpg)
+- *Camp near Marrakech*, Théo van Rysselberghe: [Théo van Rysselberghe - Tent camp or horse market near Marrakech.jpg](https://commons.wikimedia.org/wiki/File:Th%C3%A9o_van_Rysselberghe_-_Tent_camp_or_horse_market_near_Marrakech.jpg)
 
 **Midday**
 
-- Chefchaouen · blue stairs: [2018 01 (Blue) - Chaouen.jpg](https://commons.wikimedia.org/wiki/File:2018_01_(Blue)_-_Chaouen.jpg) by Fbrandao.1963, CC BY-SA 4.0
-- Koutoubia · Marrakech: [Koutoubia minaret from the city.JPG](https://commons.wikimedia.org/wiki/File:Koutoubia_minaret_from_the_city.JPG) by Schorle, CC BY-SA 4.0
-- Aït Benhaddou: [Ksar Aït Benhaddou, Marocco (أيت بن حدو، المغرب, ⴰⵢⵜ ⵃⴰⴷⴷⵓ).jpg](https://commons.wikimedia.org/wiki/File:Ksar_A%C3%AFt_Benhaddou,_Marocco_(%D8%A3%D9%8A%D8%AA_%D8%A8%D9%86_%D8%AD%D8%AF%D9%88%D8%8C_%D8%A7%D9%84%D9%85%D8%BA%D8%B1%D8%A8,_%E2%B4%B0%E2%B5%A2%E2%B5%9C_%E2%B5%83%E2%B4%B0%E2%B4%B7%E2%B4%B7%E2%B5%93).jpg) by Petar Milošević, CC BY-SA 4.0
-- Essaouira: [Essaouira Citadel.jpg](https://commons.wikimedia.org/wiki/File:Essaouira_Citadel.jpg) by Ahmed.magdy, CC BY-SA 4.0
-- Fes medina: [Medina of Fes, Marocco.jpg](https://commons.wikimedia.org/wiki/File:Medina_of_Fes,_Marocco.jpg) by Petar Milošević, CC BY-SA 4.0
-- Kasbah of the Oudayas · Rabat: [Fortifications of Rabat, Kasbah Udayas (أسوار الرباط).jpg](https://commons.wikimedia.org/wiki/File:Fortifications_of_Rabat,_Kasbah_Udayas_(%D8%A3%D8%B3%D9%88%D8%A7%D8%B1_%D8%A7%D9%84%D8%B1%D8%A8%D8%A7%D8%B7).jpg) by Petar Milošević, CC BY-SA 4.0
-- Todgha Gorge: [Todgha Gorge walking through 03.jpg](https://commons.wikimedia.org/wiki/File:Todgha_Gorge_walking_through_03.jpg) by Elena Tatiana Chis, CC BY-SA 4.0
-- High Atlas · snow: [High Atlas Mountains Taroudant Marrakesh.jpg](https://commons.wikimedia.org/wiki/File:High_Atlas_Mountains_Taroudant_Marrakesh.jpg) by Ayman Abdelilah, CC BY-SA 4.0
-- Jardin Majorelle: [Jardin Majorelle in Marrakesch 07.jpg](https://commons.wikimedia.org/wiki/File:Jardin_Majorelle_in_Marrakesch_07.jpg) by Alexander Leisser, CC BY-SA 4.0
-- Essaouira beach: [Beach and surfers, Essaouira, Morocco.jpg](https://commons.wikimedia.org/wiki/File:Beach_and_surfers,_Essaouira,_Morocco.jpg) by Goldfinchshuffle, CC BY-SA 4.0
+- *The Red Gate, Rabat*, Edwin Lord Weeks: [Rabat (The Red Gate) by Edwin Lord Weeks.jpg](https://commons.wikimedia.org/wiki/File:Rabat_(The_Red_Gate)_by_Edwin_Lord_Weeks.jpg)
+- *Moorish Buildings in Sunlight*, John Singer Sargent: [Moorish Buildings in Sunlight MET ap50.130.9.jpg](https://commons.wikimedia.org/wiki/File:Moorish_Buildings_in_Sunlight_MET_ap50.130.9.jpg)
+- *Moorish Buildings on a Cloudy Day*, John Singer Sargent: [Moorish Buildings on a Cloudy Day MET ap50.130.7.jpg](https://commons.wikimedia.org/wiki/File:Moorish_Buildings_on_a_Cloudy_Day_MET_ap50.130.7.jpg)
+- *Courtyard, Tetuan*, John Singer Sargent: [Courtyard, Tetuan, Morocco MET ap50.130.6.jpg](https://commons.wikimedia.org/wiki/File:Courtyard,_Tetuan,_Morocco_MET_ap50.130.6.jpg)
+- *White Walls in Sunlight*, John Singer Sargent: [White Walls in Sunlight, Morocco MET ap50.130.4.jpg](https://commons.wikimedia.org/wiki/File:White_Walls_in_Sunlight,_Morocco_MET_ap50.130.4.jpg)
+- *Beach Scene, Tangier*, James Wilson Morrice: [James Wilson Morrice - Beach Scene, Tangier - Google Art Project.jpg](https://commons.wikimedia.org/wiki/File:James_Wilson_Morrice_-_Beach_Scene,_Tangier_-_Google_Art_Project.jpg)
+- *The Port of Rabat*, Albert Marquet: [Albert Marquet, Le port de Rabat.jpg](https://commons.wikimedia.org/wiki/File:Albert_Marquet,_Le_port_de_Rabat.jpg)
+- *The Kasbah of Tangier*, unknown painter: [Une vue de la Kasbah de Tanger, Maroc.jpg](https://commons.wikimedia.org/wiki/File:Une_vue_de_la_Kasbah_de_Tanger,_Maroc.jpg)
+- *Market in Tangier*, Enrique Simonet, 1913: [Enrique Simonet - Mercado de Tanger 1913.jpg](https://commons.wikimedia.org/wiki/File:Enrique_Simonet_-_Mercado_de_Tanger_1913.jpg)
+- *Moroccan Scene*, Louis Comfort Tiffany: [Louis Comfort Tiffany - Moroccan Scene - 2013.23 - Cleveland Museum of Art.jpg](https://commons.wikimedia.org/wiki/File:Louis_Comfort_Tiffany_-_Moroccan_Scene_-_2013.23_-_Cleveland_Museum_of_Art.jpg)
+- *Landing Stage, Morocco*, Lucien Simon: [501 Lucien Simon Embarcadère au Maroc.jpg](https://commons.wikimedia.org/wiki/File:501_Lucien_Simon_Embarcad%C3%A8re_au_Maroc.jpg)
+- *Camp in Morocco*, Théo van Rysselberghe: [Théo van Rysselberghe, Campement au Maroc, sd.jpg](https://commons.wikimedia.org/wiki/File:Th%C3%A9o_van_Rysselberghe,_Campement_au_Maroc,_sd.jpg)
 
-**Evening**
+**Evening (also shown moonlit at night)**
 
-- Hassan II Mosque · Casablanca: [Whispers of Gold - Hassan II Mosque at Dusk.jpg](https://commons.wikimedia.org/wiki/File:Whispers_of_Gold_-_Hassan_II_Mosque_at_Dusk.jpg) by OussamaHamama, CC BY-SA 4.0
-- Erg Chebbi · sunset: [Erg Chebbi sunset.jpg](https://commons.wikimedia.org/wiki/File:Erg_Chebbi_sunset.jpg) by Thomas Fuhrmann, CC BY-SA 4.0
-- Chefchaouen · dusk: [Chefchaouen city.jpg](https://commons.wikimedia.org/wiki/File:Chefchaouen_city.jpg) by Naoufal El Faik, CC BY-SA 4.0
-- Chefchaouen · sunset: [The blue city of Chefchaouen during sunset, Morocco.jpg](https://commons.wikimedia.org/wiki/File:The_blue_city_of_Chefchaouen_during_sunset,_Morocco.jpg) by MarwanAndrew, CC BY-SA 4.0
-- Jemaa el-Fnaa · sunset: [Jemaa el-Fnaa at night.jpg](https://commons.wikimedia.org/wiki/File:Jemaa_el-Fnaa_at_night.jpg) by procsilas, CC BY 2.0
-- Koutoubia · sunset: [Day 2 - sunset at the Kutubiyya Mosque, Marrakech, Morocco 2010 - Flickr - ambabheg.jpg](https://commons.wikimedia.org/wiki/File:Day_2_-_sunset_at_the_Kutubiyya_Mosque,_Marrakech,_Morocco_2010_-_Flickr_-_ambabheg.jpg) by Forbes Johnston from Winchester, UK, CC BY 2.0
-- Essaouira · sunset: [Sunset with kite, Essaouira, Morocco.jpg](https://commons.wikimedia.org/wiki/File:Sunset_with_kite,_Essaouira,_Morocco.jpg) by Goldfinchshuffle, CC BY-SA 4.0
-- Sidi Rabat · ocean sunset: [Sunset Sidi Rabat Massa Oct25 A7CR 07982.jpg](https://commons.wikimedia.org/wiki/File:Sunset_Sidi_Rabat_Massa_Oct25_A7CR_07982.jpg) by Timothy A. Gonsalves, CC BY-SA 4.0
-- Middle Atlas · golden hour: [Middle Atlas Morocco.jpg](https://commons.wikimedia.org/wiki/File:Middle_Atlas_Morocco.jpg) by Ayman Abdelilah, CC BY-SA 4.0
-- Kasbah · sunset: [Casbah (igherm), couché de soleil à Imassine.JPG](https://commons.wikimedia.org/wiki/File:Casbah_(igherm),_couch%C3%A9_de_soleil_%C3%A0_Imassine.JPG) by Ali Aboulahcen, CC BY-SA 4.0
-
-**Night**
-
-- Jemaa el-Fnaa · night: [Jemaa El Fnaa - panoramio (2).jpg](https://commons.wikimedia.org/wiki/File:Jemaa_El_Fnaa_-_panoramio_(2).jpg) by Angela Stefanoni, CC BY 3.0
-- Koutoubia · night: [Kutubiyya Mosque, At night 1.jpg](https://commons.wikimedia.org/wiki/File:Kutubiyya_Mosque,_At_night_1.jpg) by روتانا, CC BY-SA 4.0
-- Marrakech palm grove · blue hour: [06052012-Palmeraie Marrakech by night (7157746578).jpg](https://commons.wikimedia.org/wiki/File:06052012-Palmeraie_Marrakech_by_night_(7157746578).jpg) by WiLPrZ from Rabat, Maroc, CC BY-SA 2.0
-- Bab Boujloud · Fes: [The Blue Gate of Fes at night (5364917784).jpg](https://commons.wikimedia.org/wiki/File:The_Blue_Gate_of_Fes_at_night_(5364917784).jpg) by Michal Osmenda from Brussels, Belgium, CC BY-SA 2.0
-- Marrakech · night: [Marrakech Night 2017.jpg](https://commons.wikimedia.org/wiki/File:Marrakech_Night_2017.jpg) by SteefArt, CC BY-SA 4.0
+- *The Casbah, Tangier*, Marcus Waterman: [Marcus Waterman The Casbah, Tangier.jpg](https://commons.wikimedia.org/wiki/File:Marcus_Waterman_The_Casbah,_Tangier.jpg)
+- *Camels beside a Cistern*, Edwin Lord Weeks: [Edwin Lord Weeks - Camels beside a cistern.jpg](https://commons.wikimedia.org/wiki/File:Edwin_Lord_Weeks_-_Camels_beside_a_cistern.jpg)
+- *View of Tangier*, Eugène Delacroix: [Eugène Delacroix - Vue de Tanger.jpg](https://commons.wikimedia.org/wiki/File:Eug%C3%A8ne_Delacroix_-_Vue_de_Tanger.jpg)
+- *Market of Tangier*, Frank Buchser, 1880: [Frank Buchser Markt von Tanger 1880.jpg](https://commons.wikimedia.org/wiki/File:Frank_Buchser_Markt_von_Tanger_1880.jpg)
 
 ## License
 

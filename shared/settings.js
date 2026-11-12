@@ -23,16 +23,16 @@ window.TV = window.TV || {};
       opt('Seconds', 'seconds', BOOL, onOff),
     ] },
     { id: 'wall', name: 'Wallpaper', icon: 'moon', rows: () => [
-      // three families of backgrounds: painted (live sky), real photos of Morocco, and your AI paintings
-      { label: 'Category', opts: () => ['painted', 'photo', 'ai'].filter(k => TV.sky.list(k).length || k === TV.sky.SCENES[TV.sky.scene].kind),
+      // three families of backgrounds: painted (live sky), paintings of Morocco, and your AI paintings
+      { label: 'Category', opts: () => ['painted', 'art', 'ai'].filter(k => TV.sky.list(k).length || k === TV.sky.SCENES[TV.sky.scene].kind),
         get: () => TV.sky.SCENES[TV.sky.scene].kind,
         set: v => { const first = TV.sky.list(v)[0]; if (!first) return; S().scenes = { ...(S().scenes || {}), [location.pathname]: first }; TV.sky.setScene(first); },
-        show: v => ({ painted: 'Painted · live sky', photo: `Real photos · ${TV.sky.list('photo').length}`, ai: `AI paintings · ${TV.sky.list('ai').length}` })[v] },
+        show: v => ({ painted: 'Painted · live sky', art: `Paintings of Morocco · ${TV.sky.list('art').length}`, ai: `AI paintings · ${TV.sky.list('ai').length}` })[v] },
       { label: 'Scene', opts: () => TV.sky.list(TV.sky.SCENES[TV.sky.scene].kind), get: () => TV.sky.scene,
         set: v => { S().scenes = { ...(S().scenes || {}), [location.pathname]: v }; TV.sky.setScene(v); }, show: v => TV.sky.SCENES[v].name },
-      opt('Photo changes', 'photoEvery', () => [15, 30, 60, 180, 0], v => v === 0 ? 'Never' : v < 60 ? `Every ${v} min` : v === 60 ? 'Every hour' : `Every ${v / 60} hours`,
+      opt('Picture changes', 'photoEvery', () => [15, 30, 60, 180, 0], v => v === 0 ? 'Never' : v < 60 ? `Every ${v} min` : v === 60 ? 'Every hour' : `Every ${v / 60} hours`,
         () => TV.store.set('photoAt', Date.now())),
-      { label: 'Photo by', action: () => { }, show: () => { const c = TV.sky.credit(); return c ? `${c.artist} · ${c.license}` : (TV.sky.SCENES[TV.sky.scene].kind === 'ai' ? 'AI painting' : 'Painted by Horizon'); } },
+      { label: 'Painting', action: () => { }, show: () => { const c = TV.sky.credit(); return c ? `${c.artist} · public domain` : (TV.sky.SCENES[TV.sky.scene].kind === 'ai' ? 'AI painting' : 'Painted by Horizon'); } },
       opt('Mode', 'wallMode', () => ['live', 'still', 'photos'], v => ({ live: 'Live · animated', still: 'Still · lightest', photos: 'My photos' })[v], v => TV.sky.setMode(v)),
       opt('Dim wallpaper', 'dim', () => [0, .15, .3, .45], v => v ? Math.round(v * 100) + '%' : 'Off'),
       opt('Parallax', 'parallax', BOOL, onOff),
