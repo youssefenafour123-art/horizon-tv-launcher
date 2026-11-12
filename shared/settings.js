@@ -23,8 +23,14 @@ window.TV = window.TV || {};
       opt('Seconds', 'seconds', BOOL, onOff),
     ] },
     { id: 'wall', name: 'Wallpaper', icon: 'moon', rows: () => [
-      { label: 'Scene', opts: () => Object.keys(TV.sky.SCENES), get: () => TV.sky.scene,
+      // three families of backgrounds: painted (live sky), real photos of Morocco, and your AI paintings
+      { label: 'Category', opts: () => ['painted', 'photo', 'ai'].filter(k => TV.sky.list(k).length || k === TV.sky.SCENES[TV.sky.scene].kind),
+        get: () => TV.sky.SCENES[TV.sky.scene].kind,
+        set: v => { const first = TV.sky.list(v)[0]; if (!first) return; S().scenes = { ...(S().scenes || {}), [location.pathname]: first }; TV.sky.setScene(first); },
+        show: v => ({ painted: 'Painted · live sky', photo: `Real photos · ${TV.sky.list('photo').length}`, ai: `AI paintings · ${TV.sky.list('ai').length}` })[v] },
+      { label: 'Scene', opts: () => TV.sky.list(TV.sky.SCENES[TV.sky.scene].kind), get: () => TV.sky.scene,
         set: v => { S().scenes = { ...(S().scenes || {}), [location.pathname]: v }; TV.sky.setScene(v); }, show: v => TV.sky.SCENES[v].name },
+      { label: 'Photo by', action: () => { }, show: () => { const c = TV.sky.credit(); return c ? `${c.artist} · ${c.license}` : (TV.sky.SCENES[TV.sky.scene].kind === 'ai' ? 'AI painting' : 'Painted by Horizon'); } },
       opt('Mode', 'wallMode', () => ['live', 'still', 'photos'], v => ({ live: 'Live · animated', still: 'Still · lightest', photos: 'My photos' })[v], v => TV.sky.setMode(v)),
       opt('Dim wallpaper', 'dim', () => [0, .15, .3, .45], v => v ? Math.round(v * 100) + '%' : 'Off'),
       opt('Parallax', 'parallax', BOOL, onOff),

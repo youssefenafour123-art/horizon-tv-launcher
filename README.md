@@ -15,6 +15,7 @@ watching something else.
 
 | | |
 |---|---|
+| **Moroccan photos & AI paintings** | Besides the painted live scenes (Sahara, Atlas lake, Essaouira, medina, Aït Benhaddou, Koutoubia, Merzouga caravan…), 14 high-resolution photos of Morocco (Chefchaouen, Hassan II Mosque, Koutoubia, Aït Benhaddou, Erg Chebbi, Essaouira, Fes, the Oudayas, Todgha, the High Atlas, Majorelle, the Rif) whose light follows the real time of day: warm at golden hour, deep blue at night. Add your own AI paintings with the prompts in [wallpapers/ai/PROMPTS.md](wallpapers/ai/PROMPTS.md). Settings → Wallpaper → Category: Painted · Real photos · AI paintings. |
 | **Live wallpaper that follows the sky** | Painted scenes (Sahara, Atlas lake, Essaouira coast, rolling hills, medina) whose sky is calculated from the real position of the sun and moon where you live: before dawn, sunrise, midday, afternoon, golden hour, sunset, dusk and night, with stars, the Milky Way, the moon in its real phase, clouds and birds. |
 | **Prayer times, offline** | Calculated on the TV itself (no internet needed after your city is known). Methods: Morocco (Habous), Muslim World League, Umm al-Qura, Egyptian, Gulf, Karachi, ISNA, Algeria, Tunisia, Turkey (Diyanet), France (UOIF). Standard or Hanafi Asr. Picked automatically from your country. |
 | **Your mosque's timetable** | Optional: use the exact times of your mosque from [Mawaqit](https://mawaqit.net) instead of calculating them. Set it once with `adb shell am start -n com.horizon.launcher/.MainActivity --es mosque <slug>` (the slug is the end of the mosque's Mawaqit address, e.g. `bischheim` for mawaqit.net/fr/m/bischheim). The yearly timetable is saved on the TV and refreshed daily; switch between the mosque and calculated times in Settings → Prayer times → Timetable. |
@@ -220,6 +221,25 @@ The interface is HTML/CSS/JS, bundled inside the APK and served locally (it work
 - Fonts from [Google Fonts](https://fonts.google.com) (Outfit, Plus Jakarta Sans, Instrument Serif, Fraunces, Figtree, Readex Pro, Geist, Space Grotesk, Bricolage Grotesque, Noto Kufi Arabic, Amiri, Noto Naskh Arabic, IBM Plex Sans Arabic, Cairo).
 
 App names and logos belong to their respective owners. Horizon isn't affiliated with Google, TCL or any app shown.
+
+### Photo credits
+
+The photos in `wallpapers/photos/` come from [Wikimedia Commons](https://commons.wikimedia.org), cropped to 16:9 and resized to 2560×1440. They keep their own licenses (not covered by this project's MIT license):
+
+- **Chefchaouen · blue stairs**: [2018 01 (Blue) - Chaouen.jpg](https://commons.wikimedia.org/wiki/File:2018_01_(Blue)_-_Chaouen.jpg) by Fbrandao.1963, CC BY-SA 4.0
+- **Chefchaouen**: [قصبة شفشاون.jpg](https://commons.wikimedia.org/wiki/File:%D9%82%D8%B5%D8%A8%D8%A9_%D8%B4%D9%81%D8%B4%D8%A7%D9%88%D9%86.jpg) by Mustafa DAHMANI, CC BY-SA 4.0
+- **Koutoubia · Marrakech**: [Koutoubia minaret from the city.JPG](https://commons.wikimedia.org/wiki/File:Koutoubia_minaret_from_the_city.JPG) by Schorle, CC BY-SA 4.0
+- **Hassan II Mosque · Casablanca**: [Whispers of Gold - Hassan II Mosque at Dusk.jpg](https://commons.wikimedia.org/wiki/File:Whispers_of_Gold_-_Hassan_II_Mosque_at_Dusk.jpg) by OussamaHamama, CC BY-SA 4.0
+- **Aït Benhaddou**: [Ksar Aït Benhaddou, Marocco (أيت بن حدو، المغرب, ⴰⵢⵜ ⵃⴰⴷⴷⵓ).jpg](https://commons.wikimedia.org/wiki/File:Ksar_A%C3%AFt_Benhaddou,_Marocco_(%D8%A3%D9%8A%D8%AA_%D8%A8%D9%86_%D8%AD%D8%AF%D9%88%D8%8C_%D8%A7%D9%84%D9%85%D8%BA%D8%B1%D8%A8,_%E2%B4%B0%E2%B5%A2%E2%B5%9C_%E2%B5%83%E2%B4%B0%E2%B4%B7%E2%B4%B7%E2%B5%93).jpg) by Petar Milošević, CC BY-SA 4.0
+- **Erg Chebbi · sunset**: [Erg Chebbi sunset.jpg](https://commons.wikimedia.org/wiki/File:Erg_Chebbi_sunset.jpg) by Thomas Fuhrmann, CC BY-SA 4.0
+- **Erg Chebbi · caravan**: [Camel Tour on Erg Chebbi riding across the dunes.jpg](https://commons.wikimedia.org/wiki/File:Camel_Tour_on_Erg_Chebbi_riding_across_the_dunes.jpg) by Johannes K Becker, CC BY-SA 3.0
+- **Essaouira**: [Essaouira Citadel.jpg](https://commons.wikimedia.org/wiki/File:Essaouira_Citadel.jpg) by Ahmed.magdy, CC BY-SA 4.0
+- **Fes medina**: [Medina of Fes, Marocco.jpg](https://commons.wikimedia.org/wiki/File:Medina_of_Fes,_Marocco.jpg) by Petar Milošević, CC BY-SA 4.0
+- **Kasbah of the Oudayas · Rabat**: [Fortifications of Rabat, Kasbah Udayas (أسوار الرباط).jpg](https://commons.wikimedia.org/wiki/File:Fortifications_of_Rabat,_Kasbah_Udayas_(%D8%A3%D8%B3%D9%88%D8%A7%D8%B1_%D8%A7%D9%84%D8%B1%D8%A8%D8%A7%D8%B7).jpg) by Petar Milošević, CC BY-SA 4.0
+- **Todgha Gorge**: [Todgha Gorge walking through 03.jpg](https://commons.wikimedia.org/wiki/File:Todgha_Gorge_walking_through_03.jpg) by Elena Tatiana Chis, CC BY-SA 4.0
+- **High Atlas · snow**: [High Atlas Mountains Taroudant Marrakesh.jpg](https://commons.wikimedia.org/wiki/File:High_Atlas_Mountains_Taroudant_Marrakesh.jpg) by Ayman Abdelilah, CC BY-SA 4.0
+- **Jardin Majorelle**: [Jardin Majorelle in Marrakesch 07.jpg](https://commons.wikimedia.org/wiki/File:Jardin_Majorelle_in_Marrakesch_07.jpg) by Alexander Leisser, CC BY-SA 4.0
+- **Rif valley**: [Landscape Chrouda, between Chefchaouen and Oued Laou.jpg](https://commons.wikimedia.org/wiki/File:Landscape_Chrouda,_between_Chefchaouen_and_Oued_Laou.jpg) by Othmane.elam, CC BY-SA 4.0
 
 ## License
 

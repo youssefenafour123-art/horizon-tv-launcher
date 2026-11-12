@@ -131,6 +131,35 @@ window.TV = window.TV || {};
     }
   }
 
+  // square Maghrebi minaret with its lantern and the three golden balls (jamour): Koutoubia, Hassan II
+  function minaret(c, x, gy, w, h, color) {
+    c.fillStyle = color;
+    c.fillRect(x - w / 2, gy - h, w, h);                                   // shaft
+    c.fillRect(x - w / 2 - w * .06, gy - h - w * .08, w * 1.12, w * .1);   // cornice
+    for (let i = 0; i < 5; i++) c.fillRect(x - w / 2 + i * w / 4.6, gy - h - w * .2, w * .12, w * .12); // merlons
+    const lw = w * .42, lh = w * .62;
+    c.fillRect(x - lw / 2, gy - h - lh, lw, lh);                           // lantern
+    c.beginPath(); c.arc(x, gy - h - lh, lw / 2, Math.PI, 0); c.fill();     // its little dome
+    c.fillRect(x - w * .015, gy - h - lh - lw * .5 - w * .5, w * .03, w * .5);
+    for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(x, gy - h - lh - lw * .5 - w * (.1 + i * .14), w * (.05 - i * .01), 0, 7); c.fill(); }
+  }
+  // earthen kasbah tower: slightly tapered, crenellated corners
+  function tower(c, x, gy, w, h, color) {
+    c.fillStyle = color;
+    c.beginPath(); c.moveTo(x - w / 2, gy); c.lineTo(x - w * .43, gy - h); c.lineTo(x + w * .43, gy - h); c.lineTo(x + w / 2, gy); c.fill();
+    for (let i = 0; i < 4; i++) c.fillRect(x - w * .43 + i * w * .26, gy - h - w * .14, w * .12, w * .15);
+  }
+  function camel(c, x, gy, s, color) {
+    c.fillStyle = color; c.strokeStyle = color; c.lineCap = 'round'; c.save(); c.translate(x, gy); c.scale(s, s);
+    c.beginPath(); c.ellipse(0, -62, 34, 16, 0, 0, 7); c.fill();                               // body
+    c.beginPath(); c.ellipse(-4, -76, 16, 14, 0, Math.PI, 0); c.fill();                          // hump
+    c.lineWidth = 7; c.beginPath(); c.moveTo(28, -66); c.quadraticCurveTo(46, -76, 44, -96); c.stroke(); // neck
+    c.beginPath(); c.ellipse(50, -98, 10, 6, .3, 0, 7); c.fill();                                // head
+    c.lineWidth = 5; for (const lx of [-24, -14, 16, 26]) { c.beginPath(); c.moveTo(lx, -54); c.lineTo(lx + (lx > 0 ? 3 : -3), 0); c.stroke(); }
+    c.lineWidth = 3; c.beginPath(); c.moveTo(-34, -64); c.quadraticCurveTo(-44, -52, -40, -40); c.stroke(); // tail
+    c.restore();
+  }
+
   /* ---------- scenes: each paints layers far→near, colored from horizon → near (atmospheric perspective) ---------- */
   const SCENES = {
     dunes: { name: 'Sahara', horizon: 700, paint(c, p, night) {
@@ -226,7 +255,128 @@ window.TV = window.TV || {};
       row(960, 70, 170, .88, true);
       c.fillStyle = col(1); c.fillRect(0, 1000, W, 80);
     } },
+
+    /* ---------- more of Morocco ---------- */
+    kasbah: { name: 'Aït Benhaddou', horizon: 690, water: 905, paint(c, p, night, lights) {
+      const n1 = noise(71), n2 = noise(72), r = rng(73);
+      const day = clamp(1 - night * 1.4, 0, 1);
+      const earth = mix(p.n, hex('#a65a32'), .6 * day), green = mix(p.n, hex('#2e4a2a'), .6 * day);
+      const col = (k, base = earth) => css(mix(p.h, base, k));
+      fillLine(c, line(x => 680 - 120 * n1(x / 700, 4, true) + 20), col(.28));           // far ridge
+      // the ksar on its hill, the granary (agadir) on top
+      const hill = x => 900 - 300 * Math.exp(-(((x - 980) / 330) ** 2)) - 18 * n2(x / 60);
+      fillLine(c, line(hill, 4), col(.6), 910);
+      const ks = [[700, 54, 90], [770, 46, 70], [830, 60, 120], [900, 44, 80], [960, 70, 150], [1040, 50, 110], [1100, 62, 130], [1170, 48, 90], [1240, 56, 100], [1310, 44, 70]];
+      for (const [x, w, h] of ks) {
+        const gy = hill(x) + 30;
+        tower(c, x, gy, w, h, col(.68));
+        for (let wy = gy - h + 18; wy < gy - 10; wy += 26) if (r() < .5) lights.push([x - 4, wy, 7, 9, .5 + r() * .5]);
+      }
+      c.fillStyle = col(.62); c.fillRect(930, hill(980) - 40, 110, 50); for (let i = 0; i < 110; i += 18) c.fillRect(930 + i, hill(980) - 52, 10, 12);
+      // oasis along the river
+      fillLine(c, line(x => 900 - 14 * n2(x / 40)), col(.82, green), 906);
+      for (const [x, h, l] of [[140, 150, 10], [260, 120, -8], [420, 170, 14], [560, 110, -6], [1420, 160, -10], [1560, 130, 8], [1700, 175, -14], [1840, 120, 6]]) palm(c, x, 906, h, l, col(.82, green));
+    }, fore(c, p) {
+      const col = css(mix(p.h, p.n, 1)), n4 = noise(74);
+      fillLine(c, line(x => 1050 - 24 * n4(x / 90)), col);
+      palm(c, 90, 1060, 320, 30, col); palm(c, 1830, 1060, 280, -26, col);
+    } },
+    koutoubia: { name: 'Marrakech · Koutoubia', horizon: 660, paint(c, p, night, lights) {
+      const n1 = noise(91), n2 = noise(92), r = rng(93);
+      const day = clamp(1 - night * 1.4, 0, 1);
+      const ochre = mix(p.n, hex('#b0563a'), .62 * day), palmc = mix(p.n, hex('#2c3f2a'), .6 * day);
+      const col = (k, base = ochre) => css(mix(p.h, base, k));
+      // the snowy High Atlas behind the city
+      const atlas = line(x => 560 - 250 * n1(x / 600, 5, true) + 60);
+      const snow = c.createLinearGradient(0, 330, 0, 620);
+      snow.addColorStop(0, css(mix(mix(p.h, [255, 255, 255], .75 * day + .1), p.g, .2)));
+      snow.addColorStop(.45, css(mix(p.h, mix(p.u, [200, 210, 230], .3), .55)));
+      snow.addColorStop(1, col(.2));
+      fillLine(c, atlas, snow, 760);
+      // the palmeraie
+      for (let i = 0; i < 26; i++) palm(c, -20 + i * 78 + r() * 30, 790 + r() * 20, 90 + r() * 70, (r() - .5) * 30, col(.55, palmc));
+      fillLine(c, line(x => 800 - 8 * n2(x / 50)), col(.55, palmc), 806);
+      minaret(c, 760, 800, 96, 360, col(.7));                                           // Koutoubia
+      c.fillStyle = col(.7); c.fillRect(812, 760, 300, 42);
+      // the ochre ramparts with a gate
+      c.fillStyle = col(.9);
+      c.fillRect(-20, 870, W + 40, 220);
+      for (let x = -10; x < W; x += 34) c.fillRect(x, 852, 20, 20);
+      for (const tx of [240, 620, 1300, 1680]) { c.fillRect(tx, 830, 80, 60); for (let i = 0; i < 80; i += 22) c.fillRect(tx + i, 814, 14, 18); }
+      c.fillStyle = col(1); c.fillRect(-20, 1010, W + 40, 80);
+      // Bab: a horseshoe arch, lit from inside at night
+      c.fillStyle = css(mix(p.h, mix(p.n, [20, 14, 10], .6), .9));
+      c.beginPath(); c.moveTo(905, 1010); c.lineTo(905, 940); c.arc(960, 940, 55, Math.PI, 0); c.lineTo(1015, 1010); c.fill();
+      lights.push([915, 930, 90, 80, .55]);
+    } },
+    erg: { name: 'Merzouga caravan', horizon: 720, paint(c, p, night) {
+      const n1 = noise(101);
+      const day = clamp(1 - night * 1.4, 0, 1);
+      const sand = mix(p.n, hex('#c0662e'), .62 * day);
+      const col = k => css(mix(p.h, sand, k));
+      const dune = (y0, amp, per, ph, sk) => x => { const t = ((x / per + ph) % 1 + 1) % 1; const crest = t < sk ? Math.pow(t / sk, 1.7) : Math.pow((1 - t) / (1 - sk), 1.15); return y0 - amp * crest - n1(x / 260) * amp * .25; };
+      fillLine(c, line(dune(720, 140, 1500, .2, .62)), col(.3));                       // Erg Chebbi's big dunes
+      const crest = dune(830, 170, 2000, .55, .58);
+      fillLine(c, line(crest), col(.58));
+      // a caravan walking the crest
+      for (let i = 0; i < 6; i++) { const x = 760 + i * 92; camel(c, x, crest(x) + 4, .9 - i * .03, col(.58)); }
+      c.strokeStyle = col(.58); c.lineWidth = 2; c.beginPath(); for (let i = 0; i < 6; i++) { const x = 760 + i * 92; c.lineTo(x + 46, crest(x + 46) - 92); } c.stroke();
+      // a Berber tent at the foot of the dune
+      c.fillStyle = col(.8);
+      c.beginPath(); c.moveTo(220, 930); c.lineTo(300, 872); c.lineTo(440, 866); c.lineTo(520, 930); c.fill();
+      fillLine(c, line(dune(960, 120, 2400, .9, .66)), col(.8));
+      fillLine(c, line(dune(1060, 130, 3000, .3, .7)), col(1));
+    } },
   };
+  for (const k in SCENES) SCENES[k].kind = 'painted';
+  const aiReady = new Set();       // which AI paintings you have added (checked once at start)
+  let credits = {};                // photographer + license for each real photo
+
+  // the time of day on a photo: a warm glaze at golden hour, deepening blue toward night
+  function grade(c) {
+    const { p, warm, sun } = st;
+    if (warm > 0) { c.globalCompositeOperation = 'soft-light'; c.fillStyle = css(p.g, .5 * warm); c.fillRect(0, 0, W, H); }
+    const dusk = clamp((-sun.alt + 3) / 13, 0, 1);
+    if (dusk > 0) {
+      c.globalCompositeOperation = 'multiply';
+      c.fillStyle = css(mix([255, 255, 255], mix([40, 55, 112], p.z, .25), smooth(dusk) * .82)); c.fillRect(0, 0, W, H);
+    }
+    c.globalCompositeOperation = 'source-over';
+  }
+  let photoReq = 0, landDirty = true;
+  function paintPhoto(sc) {
+    const req = ++photoReq, img = new Image();
+    img.src = sc.src;
+    (img.decode ? img.decode() : new Promise((ok, no) => { img.onload = ok; img.onerror = no; })).then(() => {
+      if (req !== photoReq || asleep || SCENES[scene] !== sc) return;
+      const c = landCache.getContext('2d');
+      c.globalCompositeOperation = 'source-over';
+      c.drawImage(img, 0, 0, W, H);                                   // 2560×1440 → the 1920×1080 still layer
+      grade(c); paintScrim(c);
+      img.src = '';                                                   // let the decoded photo go
+      landDirty = true;
+    }).catch(() => { if (req === photoReq) console.log('HZSKY photo missing ' + sc.src); });
+  }
+
+  /* ---------- photo scenes: real photos of Morocco and your AI paintings, with the light of the real time of day ----------
+     Each image is 2560×1440 in wallpapers/photos or wallpapers/ai. It is decoded only to repaint the still layer
+     (when the light changes), then released, so it costs no memory or frames in between. */
+  const WALL = '../wallpapers/';
+  const PHOTOS = [
+    ['chaouen-stairs', 'Chefchaouen · blue stairs'], ['chaouen-town', 'Chefchaouen'], ['rif', 'Rif valley'],
+    ['koutoubia', 'Koutoubia · Marrakech'], ['majorelle', 'Jardin Majorelle'], ['hassan2', 'Hassan II Mosque · Casablanca'],
+    ['oudayas', 'Kasbah of the Oudayas · Rabat'], ['fes', 'Fes medina'], ['essaouira', 'Essaouira'],
+    ['benhaddou', 'Aït Benhaddou'], ['todgha', 'Todgha Gorge'], ['atlas-snow', 'High Atlas · snow'],
+    ['erg-sunset', 'Erg Chebbi · sunset'], ['erg-camels', 'Erg Chebbi · caravan'],
+  ];
+  // generate these with the prompts in wallpapers/ai/PROMPTS.md and save them as wallpapers/ai/<id>.jpg
+  const AI = [
+    ['chaouen-dusk', 'Chefchaouen at dusk'], ['riad', 'Riad courtyard'], ['sahara-night', 'Sahara night camp'],
+    ['atlas-dawn', 'Atlas village at dawn'], ['essaouira-storm', 'Essaouira, Atlantic light'], ['fes-tannery', 'Fes from the rooftops'],
+    ['koutoubia-moon', 'Koutoubia under the moon'], ['oasis', 'Draa valley oasis'], ['zellige', 'Zellige & arches'], ['caravan-gold', 'Golden caravan'],
+  ];
+  for (const [id, name] of PHOTOS) SCENES['p-' + id] = { name, kind: 'photo', src: WALL + 'photos/' + id + '.jpg', horizon: 700 };
+  for (const [id, name] of AI) SCENES['a-' + id] = { name, kind: 'ai', src: WALL + 'ai/' + id + '.jpg', horizon: 700 };
 
   /* ---------- sprites ---------- */
   function sprite(r, stops) {
@@ -346,6 +496,8 @@ window.TV = window.TV || {};
   const landKey = () => [q(st.p.n), q(st.p.g), q(st.p.h), Math.round(st.night * 20)].join('|');
   function paintLand() {
     lastLand = performance.now(); lastLandKey = landKey();
+    if (SCENES[scene].src) return paintPhoto(SCENES[scene]);
+    landDirty = true;
     const c = landCache.getContext('2d'); c.clearRect(0, 0, W, H); lights = [];
     SCENES[scene].paint(c, st.p, st.night, lights);
     if (SCENES[scene].fore) SCENES[scene].fore(c, st.p);
@@ -442,6 +594,7 @@ window.TV = window.TV || {};
     if (asleep || (photo && photo.active)) return;
     if (ms < busyUntil) return; // navigating: let the UI have every frame
     if (ms - lastSky > (lapse ? 120 : mode === 'still' ? 30000 : 2000)) { lastSky = ms; update(lapse && ms - lastLand > 400); }
+    if (SCENES[scene].src) { if (landDirty) { landDirty = false; ctx.drawImage(landCache, 0, 0); } return; }
     if (mode === 'still' && !lapse) { if (!dirty) return; dirty = false; }
     const t = (ms - t0) / 1000;
     ctx.drawImage(skyCache, 0, 0, W, H);
@@ -500,7 +653,7 @@ window.TV = window.TV || {};
     // keep only the visible canvas (it still shows the last frame); free the caches (~20 MB)
     for (const c of [skyCache, landCache, ...clouds.map(c => c.tinted)]) { c.width = 0; c.height = 0; }
     if (milky) { milky.width = milky.height = 0; milky = null; }
-    cloudKey = ''; lastLandKey = '';
+    cloudKey = ''; lastLandKey = ''; photoReq++;
   }
   function wake() {
     if (!cv || !asleep) return;
@@ -549,9 +702,18 @@ window.TV = window.TV || {};
       if (opts.photoHost) photo = { host: opts.photoHost, base: opts.photoBase || '../wallpapers/', active: false };
       mode = (TV.settings && TV.settings.wallMode) || 'live';
       document.body.classList.add('scrim-baked');
+      if (!SCENES[scene]) scene = 'dunes';
       makeClouds(); update(true); requestAnimationFrame(frame);
+      // which AI paintings exist, and the photo credits (small files, read once)
+      setTimeout(() => {
+        fetch(WALL + 'photos/credits.json').then(r => r.json()).then(list => { for (const x of list) credits['p-' + x.id] = x; }).catch(() => { });
+        for (const [id] of AI) fetch(WALL + 'ai/' + id + '.jpg', { method: 'HEAD' }).then(r => { if (r.ok) aiReady.add('a-' + id); }).catch(() => { });
+      }, 3000);
     },
-    setScene(s) { scene = s; lastLand = 0; update(true); },
+    setScene(s) { if (!SCENES[s]) return; scene = s; lastLand = 0; landDirty = true; update(true); },
+    // scenes you can pick in a category: painted, photo, ai (only the AI paintings you have added)
+    list(kind) { return Object.keys(SCENES).filter(k => SCENES[k].kind === kind && (kind !== 'ai' || aiReady.has(k))); },
+    credit(k = scene) { return credits[k] || null; },
     rebuild, sleep,
     wake() { setTimeout(wake, 150); }, // after the first frame is back on screen
     setMode(m) { mode = m; dirty = true; tryPhoto(phase); },
