@@ -36,6 +36,18 @@ window.TV = window.TV || {};
   const LEAGUE = n => /conference/i.test(n) ? 'uecl' : /europa/i.test(n) ? 'uel' : /champions/i.test(n) ? 'ucl' : /laliga|la liga/i.test(n) ? 'll' : null;
   const on = c => TV.settings.matches !== false && (TV.settings.matchComps || {})[c.nt ? 'nt' : c.id] !== false;
 
+  /* ---------- who matters most: the biggest clubs and national teams go first on the card ----------
+     2 = elite, 1 = strong. Matched on the team's full name, so the same 3-letter code in two leagues never mixes up. */
+  const ELITE = /^(real madrid|barcelona|bayern( munich| m[üu]nchen)?|fc bayern m[üu]nchen|manchester city|liverpool|arsenal|paris saint-germain|psg|internazionale|inter milan|chelsea|juventus|ac milan|manchester united|atl[ée]tico( de)? madrid|borussia dortmund|bayer leverkusen|napoli|argentina|france|spain|england|brazil|portugal|netherlands|belgium|germany|italy|croatia|morocco|uruguay)$/i;
+  const STRONG = /^(tottenham( hotspur)?|newcastle( united)?|aston villa|as roma|roma|atalanta|lazio|marseille|olympique de marseille|monaco|as monaco|lille|lyon|olympique lyonnais|benfica|fc porto|porto|sporting( cp)?|ajax|psv( eindhoven)?|galatasaray|fenerbah[çc]e|real sociedad|athletic club|villarreal|real betis|sevilla|rb leipzig|wydad( casablanca)?|raja( casablanca)?|as far|far rabat|rs berkane|renaissance berkane|colombia|united states|usa|mexico|switzerland|denmark|japan|senegal|nigeria|egypt|algeria|tunisia|ivory coast|c[ôo]te d'ivoire|turkey|t[üu]rkiye|austria|norway|ecuador|south korea|korea republic|ukraine|poland|sweden|serbia|cameroon|ghana|scotland)$/i;
+  const weight = n => ELITE.test(n.trim()) ? 2 : STRONG.test(n.trim()) ? 1 : 0;
+  const BIG_COMP = { ucl: 1, wc: 1, euro: 1, afcon: 1, ca: 1 }; // the big stages lift any game a little
+  function prio(m) {
+    const a = weight(m.h.n || ''), b = weight(m.a.n || '');
+    return a + b + (a && b ? 1 : 0) + (BIG_COMP[m.comp] || 0); // two big teams meeting: a little extra
+  }
+  const withPrio = m => (m.prio = prio(m), m);
+
   const pad = n => String(n).padStart(2, '0');
   const dayOf = off => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + off); return d; };
   const key = d => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
@@ -54,7 +66,7 @@ window.TV = window.TV || {};
     const h = t.find(x => x.homeAway === 'home') || t[0], a = t.find(x => x.homeAway === 'away') || t[1];
     if (!h || !a) return null;
     const status = c.status || e.status || {}, type = status.type || {};
-    const side = x => ({ id: String(x.team.id), code: x.team.abbreviation || (x.team.shortDisplayName || '').slice(0, 3).toUpperCase(),
+    const side = x => ({ id: String(x.team.id), n: x.team.displayName || x.team.name || '', code: x.team.abbreviation || (x.team.shortDisplayName || '').slice(0, 3).toUpperCase(),
       logo: crest(x.team.logo || (x.team.logos && x.team.logos[0] && x.team.logos[0].href)), s: score(x.score) });
     let state = type.state === 'in' ? 'live' : type.state === 'post' ? 'post' : 'pre', min = '';
     if (state === 'live') min = /HALF/.test(type.name || '') ? 'HT' : (status.displayClock || "'");
@@ -63,6 +75,7 @@ window.TV = window.TV || {};
     if (comp.id === 'rma') { const lg = e.league || (e.competitions[0].league) || {}; cid = LEAGUE(lg.abbreviation || lg.name || '') || 'rma'; }
     const m = { id: e.id, comp: cid, start: Date.parse(e.date), state, min, h: side(h), a: side(a) };
     m.fav = comp.fav || FAV_TEAMS.some(f => m.h.id === String(f.team) || m.a.id === String(f.team));
+    m.prio = prio(m);
     return m;
   }
 
@@ -81,10 +94,10 @@ window.TV = window.TV || {};
     const st = e.strStatus || 'NS';
     let state = /^(FT|AET|PEN|AP)$/.test(st) ? 'post' : /^(1H|2H|HT|ET|BT|P|LIVE|INT)$/.test(st) ? 'live' : /PST|CANC|ABD|SUSP/.test(st) ? 'off' : 'pre';
     const min = state === 'live' ? (st === 'HT' ? 'HT' : e.strProgress ? e.strProgress + "'" : st) : state === 'off' ? 'PPD' : '';
-    const side = (name, id, badge, sc) => ({ id: 'sdb' + id, code: short(name || ''), logo: badge ? badge + '/tiny' : '', s: sc == null ? '' : String(sc) });
+    const side = (name, id, badge, sc) => ({ id: 'sdb' + id, n: name || '', code: short(name || ''), logo: badge ? badge + '/tiny' : '', s: sc == null ? '' : String(sc) });
     const ts = e.strTimestamp ? Date.parse(e.strTimestamp.replace(/(\+00:00)?$/, 'Z')) : Date.parse(`${e.dateEvent}T${e.strTime || '00:00:00'}Z`);
-    return { id: 'sdb' + e.idEvent, comp: comp.id, start: ts, state, min, fav: false,
-      h: side(e.strHomeTeam, e.idHomeTeam, e.strHomeTeamBadge, e.intHomeScore), a: side(e.strAwayTeam, e.idAwayTeam, e.strAwayTeamBadge, e.intAwayScore) };
+    return withPrio({ id: 'sdb' + e.idEvent, comp: comp.id, start: ts, state, min, fav: false,
+      h: side(e.strHomeTeam, e.idHomeTeam, e.strHomeTeamBadge, e.intHomeScore), a: side(e.strAwayTeam, e.idAwayTeam, e.strAwayTeamBadge, e.intAwayScore) });
   }
   const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
@@ -135,9 +148,9 @@ window.TV = window.TV || {};
         for (const m of evs) if (m && key(new Date(m.start)) === k && !list.some(x => x.id === m.id)) list.push(m);
       } catch (e) { /* this competition is unavailable right now: show the others */ }
     }
-    // favorites (Morocco, Real Madrid) first, then live, upcoming by time, finished
+    // favorites (Morocco, Real Madrid) first, then the biggest teams, then live, upcoming by time, finished
     const st = { live: 0, pre: 1, post: 2, off: 3 };
-    list.sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || st[a.state] - st[b.state] || a.start - b.start || RANK[a.comp] - RANK[b.comp]);
+    list.sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || (b.prio || 0) - (a.prio || 0) || st[a.state] - st[b.state] || a.start - b.start || RANK[a.comp] - RANK[b.comp]);
     cache.set(k, { at: Date.now(), list });
     if (cache.size > 10) cache.delete(cache.keys().next().value);
     return list;
