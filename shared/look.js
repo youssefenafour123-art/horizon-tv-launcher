@@ -64,7 +64,7 @@ window.TV = window.TV || {};
   Object.assign(TV.settings, Object.assign({
     font: 'modern', clockSize: 'l', clockWeight: 'thin', accent: 'auto', seconds: true,
     greeting: true, verse: true, verseEvery: 30, appOrder: [], timeline: true, idle: 1, wallMode: 'live', dim: 0, parallax: !window.Horizon, // parallax moves the whole screen: off by default on the TV
-    matches: true, matchComps: {}, athanVol: 1, athanOn: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
+    matches: true, matchComps: {}, photoEvery: 60, athanVol: 1, athanOn: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
   }, TV.settings));
 
   TV.look = { FONTS, SIZES, WEIGHTS, ACCENTS, apply };

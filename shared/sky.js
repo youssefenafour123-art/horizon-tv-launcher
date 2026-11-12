@@ -332,17 +332,6 @@ window.TV = window.TV || {};
   const aiReady = new Set();       // which AI paintings you have added (checked once at start)
   let credits = {};                // photographer + license for each real photo
 
-  // the time of day on a photo: a warm glaze at golden hour, deepening blue toward night
-  function grade(c) {
-    const { p, warm, sun } = st;
-    if (warm > 0) { c.globalCompositeOperation = 'soft-light'; c.fillStyle = css(p.g, .5 * warm); c.fillRect(0, 0, W, H); }
-    const dusk = clamp((-sun.alt + 3) / 13, 0, 1);
-    if (dusk > 0) {
-      c.globalCompositeOperation = 'multiply';
-      c.fillStyle = css(mix([255, 255, 255], mix([40, 55, 112], p.z, .25), smooth(dusk) * .82)); c.fillRect(0, 0, W, H);
-    }
-    c.globalCompositeOperation = 'source-over';
-  }
   let photoReq = 0, landDirty = true;
   function paintPhoto(sc) {
     const req = ++photoReq, img = new Image();
@@ -351,8 +340,8 @@ window.TV = window.TV || {};
       if (req !== photoReq || asleep || SCENES[scene] !== sc) return;
       const c = landCache.getContext('2d');
       c.globalCompositeOperation = 'source-over';
-      c.drawImage(img, 0, 0, W, H);                                   // 2560×1440 → the 1920×1080 still layer
-      grade(c); paintScrim(c);
+      c.drawImage(img, 0, 0, W, H);                                   // 2560×1440 → the 1920×1080 still layer, as taken
+      paintScrim(c);
       img.src = '';                                                   // let the decoded photo go
       landDirty = true;
     }).catch(() => { if (req === photoReq) console.log('HZSKY photo missing ' + sc.src); });
@@ -453,7 +442,7 @@ window.TV = window.TV || {};
     if (p.s <= 0 && milky) { milky.width = milky.height = 0; milky = null; }
     paintSky(); tintClouds(p, night, warm); dirty = true;
     const key = landKey();
-    if (force || (key !== lastLandKey && performance.now() - lastLand > 30000)) paintLand();
+    if (force || (!SCENES[scene].src && key !== lastLandKey && performance.now() - lastLand > 30000)) paintLand();
   }
 
   const hz = () => SCENES[scene].horizon;
@@ -670,6 +659,31 @@ window.TV = window.TV || {};
     try { return skyCache.getContext('2d').getImageData(4, 4, 1, 1).data[3] === 0; } catch (e) { return false; }
   }
 
+  /* ---------- photos change on their own: every hour by default (Settings → Wallpaper → Photo changes) ----------
+     It walks through the category in a shuffled order without repeats, and fades between photos. */
+  let order = [];
+  function nextPhoto() {
+    const kind = SCENES[scene].kind, all = TV.sky.list(kind);
+    if (all.length < 2) return;
+    order = order.filter(k => all.includes(k) && k !== scene);
+    if (!order.length) { order = all.filter(k => k !== scene); for (let i = order.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [order[i], order[j]] = [order[j], order[i]]; } }
+    const next = order.shift();
+    cv.style.transition = 'opacity .9s ease'; cv.style.opacity = 0;       // one short fade, then everything is still again
+    setTimeout(() => {
+      TV.sky.setScene(next);
+      if (TV.settings) { TV.settings.scenes = { ...(TV.settings.scenes || {}), [location.pathname]: next }; TV.saveSettings && TV.saveSettings(); }
+      setTimeout(() => { cv.style.opacity = 1; }, 450);
+    }, 950);
+    TV.store && TV.store.set('photoAt', Date.now());
+  }
+  setInterval(() => {
+    const every = (TV.settings && TV.settings.photoEvery) ?? 60;          // minutes; 0 = never
+    if (!cv || asleep || document.hidden || !every || !SCENES[scene].src) return;
+    const at = (TV.store && TV.store.get('photoAt', 0)) || 0;
+    if (!at) { TV.store && TV.store.set('photoAt', Date.now()); return; }
+    if (Date.now() - at >= every * 60e3) nextPhoto();
+  }, 60e3);
+
   /* ---------- time-lapse preview ---------- */
   let label;
   function toggleLapse() {
@@ -710,10 +724,11 @@ window.TV = window.TV || {};
         for (const [id] of AI) fetch(WALL + 'ai/' + id + '.jpg', { method: 'HEAD' }).then(r => { if (r.ok) aiReady.add('a-' + id); }).catch(() => { });
       }, 3000);
     },
-    setScene(s) { if (!SCENES[s]) return; scene = s; lastLand = 0; landDirty = true; update(true); },
+    setScene(s) { if (!SCENES[s]) return; scene = s; lastLand = 0; landDirty = true; update(true); TV.store && TV.store.set('photoAt', Date.now()); }, // the hour starts again from a new photo
     // scenes you can pick in a category: painted, photo, ai (only the AI paintings you have added)
     list(kind) { return Object.keys(SCENES).filter(k => SCENES[k].kind === kind && (kind !== 'ai' || aiReady.has(k))); },
     credit(k = scene) { return credits[k] || null; },
+    nextPhoto,
     rebuild, sleep,
     wake() { setTimeout(wake, 150); }, // after the first frame is back on screen
     setMode(m) { mode = m; dirty = true; tryPhoto(phase); },

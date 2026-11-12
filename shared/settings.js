@@ -30,6 +30,8 @@ window.TV = window.TV || {};
         show: v => ({ painted: 'Painted · live sky', photo: `Real photos · ${TV.sky.list('photo').length}`, ai: `AI paintings · ${TV.sky.list('ai').length}` })[v] },
       { label: 'Scene', opts: () => TV.sky.list(TV.sky.SCENES[TV.sky.scene].kind), get: () => TV.sky.scene,
         set: v => { S().scenes = { ...(S().scenes || {}), [location.pathname]: v }; TV.sky.setScene(v); }, show: v => TV.sky.SCENES[v].name },
+      opt('Photo changes', 'photoEvery', () => [15, 30, 60, 180, 0], v => v === 0 ? 'Never' : v < 60 ? `Every ${v} min` : v === 60 ? 'Every hour' : `Every ${v / 60} hours`,
+        () => TV.store.set('photoAt', Date.now())),
       { label: 'Photo by', action: () => { }, show: () => { const c = TV.sky.credit(); return c ? `${c.artist} · ${c.license}` : (TV.sky.SCENES[TV.sky.scene].kind === 'ai' ? 'AI painting' : 'Painted by Horizon'); } },
       opt('Mode', 'wallMode', () => ['live', 'still', 'photos'], v => ({ live: 'Live · animated', still: 'Still · lightest', photos: 'My photos' })[v], v => TV.sky.setMode(v)),
       opt('Dim wallpaper', 'dim', () => [0, .15, .3, .45], v => v ? Math.round(v * 100) + '%' : 'Off'),
