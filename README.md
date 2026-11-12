@@ -21,7 +21,8 @@ watching something else.
 | **Full athan at each prayer** | Uses Android's alarm system, so it plays even inside Netflix or YouTube, survives reboots, pauses what's playing, and shows a full-screen athan card. Any remote button stops it. Each prayer can be switched on or off separately, and the volume is adjustable. |
 | **Your real apps** | Every installed app with its own TV banner. The selected app gets a glowing edge in its own color. **Hold OK on an app to move it**: ◀ ▶ to move, ▲ to put it first. |
 | **Make it yours** | 7 font styles, clock size and weight, an accent color that can follow the sky, 12/24-hour clock, five scenes, live or still wallpaper, dim level, and a Quran verse that changes through the day. |
-| **Matches of the day** | Today's football on the home screen: LaLiga, Premier League, Serie A, Ligue 1, Botola Pro, Champions League, Europa League, Conference League and Morocco's national team. Short club codes with crests, live minute and score. Real Madrid and Morocco come first on days they play. Select the card for the full list, day by day. |
+| **Matches of the day** | Today's football on the home screen: LaLiga, Premier League, Serie A, Ligue 1, Botola Pro, Champions League, Europa League, Conference League, and national teams (World Cup, EURO, Nations League, AFCON, Copa América, their qualifiers and friendlies). Short club codes with crests, live minute and score. Real Madrid and Morocco come first on days they play. Select the card for the full list, day by day. |
+| **Formula 1 on race weekends** | An F1 tab appears on the matches card from the day before practice until the race is over: every session (practice, sprint, qualifying, race) in your local time, the live lap, and each session's top three. ◀ ▶ switches tabs. |
 | **Hijri date** | Umm al-Qura calendar, with a ±2-day adjustment for local moon sighting. |
 | **Ambient mode** | After a quiet minute the interface fades and only the sky and the clock remain. |
 
@@ -118,7 +119,7 @@ Sound always plays. To also see the athan card while another app is open, go to 
 - **Appearance**: font style (Modern, Elegant, Editorial, Rounded, Minimal, Tech, Bold), clock size and weight, accent color, 12/24-hour, seconds
 - **Wallpaper**: scene, mode (Live · Still · My photos), dim, parallax, "Preview a full day"
 - **Home screen**: greeting, verse, how often the verse changes, prayer timeline, ambient mode delay, reset app order, athan over other apps, Android TV settings
-- **Matches**: show the card, and each competition (and Real Madrid / Morocco) on or off
+- **Matches**: show the card, each league, national teams, Formula 1, and Real Madrid / Morocco on or off
 - **Prayer times**: location (automatic or a list of cities), calculation method, Asr, Hijri date ±days
 - **Athan**: on/off, volume, on/off per prayer, test
 

@@ -69,6 +69,36 @@ body.athan-on .ui { opacity: 0; }
 .mrow.fav b { color: var(--accent); font-weight: 600; }   /* Morocco and Real Madrid */
 .mrow.next .sc { color: var(--ink-2); font-weight: 500; font-size: 18px; }
 
+/* tabs (only on F1 race weekends) */
+.mtabs { display: flex; gap: 22px; font-size: 15px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-3); }
+.mtabs b { font-weight: 500; transition: color .2s; }
+.mtabs b.on { color: var(--ink); }
+.mtabs .dot { display: inline-block; width: 7px; height: 7px; margin: 0 0 2px 8px; border-radius: 50%; background: #ff5a5a; vertical-align: middle; }
+.matches.is-focused .mhint { opacity: 1; }
+.mhint { font-size: 14px; color: var(--ink-3); opacity: 0; transition: opacity .2s; }
+
+/* F1 tab: race weekend schedule; the car crosses once when the tab opens (transform + opacity only) */
+.f1top { display: flex; justify-content: space-between; align-items: flex-start; margin: 4px 0 2px; }
+.f1gp { font-family: var(--f-display); font-size: 34px; font-weight: 400; letter-spacing: -.02em; line-height: 1.1; }
+.f1where { margin-top: 4px; font-size: 16px; color: var(--ink-3); }
+.f1flag { flex: none; width: 46px; height: 32px; border-radius: 4px; opacity: .85;
+  background: conic-gradient(#fff 25%, #111 0 50%, #fff 0 75%, #111 0) 0 0 / 16px 16px; box-shadow: 0 0 0 1px rgba(255,255,255,.2); }
+.f1lane { position: relative; height: 40px; margin: 6px -28px 4px; overflow: hidden; }
+.f1lane::before { content: ''; position: absolute; left: 28px; right: 28px; top: 30px; height: 2px;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.28) 0 18px, transparent 18px 30px); }
+.f1car { position: absolute; left: 0; top: 4px; width: 150px; height: 34px; opacity: 0; color: var(--accent); }
+.f1car svg { position: absolute; right: 0; top: 0; width: 104px; height: 30px; }
+.f1car::before { content: ''; position: absolute; left: 0; right: 92px; top: 16px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, transparent, currentColor); opacity: .8; }
+.f1row { display: grid; grid-template-columns: 110px 140px 1fr; align-items: center; height: 42px; font-size: 21px; border-top: 1px solid rgba(255,255,255,.06); }
+.f1row .lbl { font-size: 15px; font-weight: 600; letter-spacing: .14em; color: var(--ink-2); }
+.f1row .when { color: var(--ink-2); font-variant-numeric: tabular-nums; font-size: 19px; }
+.f1row .res { text-align: right; letter-spacing: .04em; }
+.f1row .res b { font-weight: 600; color: var(--ink); }
+.f1row .res span { color: var(--ink-3); margin-left: 12px; }
+.f1row.race .lbl { color: var(--accent); }
+.f1row.live .res { color: #ff7a7a; font-weight: 600; }
+.f1row.pre .res { color: var(--ink-3); font-size: 17px; }
+
 /* full list */
 .matches-layer .mscrim { position: absolute; inset: 0; background: rgba(4,6,14,.6); }
 .mpanel { position: absolute; left: 150px; right: 150px; top: 56px; bottom: 56px; border-radius: 50px; padding: 44px 60px 30px; display: flex; flex-direction: column;
@@ -282,6 +312,7 @@ body.serif .settings-title { font-weight: 400; }
 <script src="../shared/remote.js"></script>
 <script src="../shared/athan.js" data-audio="../assets/athan.mp3"></script>
 <script src="../shared/matches.js"></script>
+<script src="../shared/f1.js"></script>
 <script src="../shared/settings.js"></script>
 <script src="../shared/sky.js"></script>
 <script>
@@ -493,17 +524,57 @@ body.serif .settings-title { font-weight: 400; }
     const img = x => x.logo ? `<img src="${esc(x.logo)}" alt="">` : '';
     return `<div class="mrow ${m.state}${m.comp === 'mar' ? ' mar' : ''}${m.fav ? ' fav' : ''}${m.next ? ' next' : ''}">${t}<span class="h"><b>${esc(m.h.code)}</b>${img(m.h)}</span><span class="sc">${sc}</span><span class="a">${img(m.a)}<b>${esc(m.a.code)}</b></span>${wide ? '' : `<span class="tag">${c.tag}</span>`}</div>`;
   }
-  let mHtml = '';
-  function paintMatches(feed) {
-    const all = feed ? feed.card || feed.list || [] : [], list = all.slice(0, 10);
-    const more = all.length > 10 ? `+${all.length - 10} more` : '';
-    const html = list.length ? `<div class="mhead"><span class="eyebrow">${feed.off ? 'Matches · ' + TV.matches.label(feed.off) : 'Matches today'}</span><span class="mmore">${more}</span></div>${list.map(m => mrow(m)).join('')}` : '';
-    if (html === mHtml) return;       // nothing changed: no repaint
+  // the card: football, plus an F1 tab on race weekends (◀ ▶ switches while the card is selected)
+  let mHtml = '', lastFeed = null, tab = 'foot', userTabAt = 0;
+  const F1CAR = '<svg viewBox="0 0 104 30" fill="currentColor"><path d="M2 20h10l4-6h14l6-5h14l8 5h22l10-3h8l2 4-6 2v6H86a6 6 0 0 0-12 0H34a6 6 0 0 0-12 0H2z" opacity=".95"/><circle cx="28" cy="25" r="5"/><circle cx="80" cy="25" r="5"/><path d="M90 8h12v4H90z"/></svg>';
+  function tabs(right) {
+    if (!TV.f1.weekend) return `<div class="mhead"><span class="eyebrow">${lastFeed && lastFeed.off ? 'Matches · ' + TV.matches.label(lastFeed.off) : 'Matches today'}</span><span class="mmore">${right}</span></div>`;
+    return `<div class="mhead"><span class="mtabs"><b class="${tab === 'foot' ? 'on' : ''}">Football</b><b class="${tab === 'f1' ? 'on' : ''}">F1${TV.f1.live ? '<i class="dot"></i>' : ''}</b></span><span class="mmore">${right || '<span class="mhint">◀ ▶</span>'}</span></div>`;
+  }
+  function f1html(w) {
+    const day = d => new Date(d).toLocaleDateString('en-GB', { weekday: 'short' });
+    const next = w.sessions.find(x => x.state === 'pre');
+    const rows = w.sessions.map(x => {
+      const res = x.state === 'live' ? `LIVE${x.lap ? ' · Lap ' + x.lap : ''}${x.top[0] ? ' · ' + x.top[0] : ''}`
+        : x.state === 'post' && x.top.length ? `<b>${x.top[0]}</b>${x.top.slice(1).map(c => `<span>${c}</span>`).join('')}`
+        : x.state === 'post' ? 'Done' : x === next ? 'Next' : '';
+      return `<div class="f1row ${x.state}${x.id === 'Race' ? ' race' : ''}"><span class="lbl">${x.label}</span><span class="when">${day(x.start)} ${TV.fmt.time(new Date(x.start))}</span><span class="res">${res}</span></div>`;
+    }).join('');
+    return `<div class="f1top"><div><div class="f1gp">${esc(w.name)}</div><div class="f1where">${esc(w.circuit)}${w.place ? ' · ' + esc(w.place) : ''}</div></div><span class="f1flag"></span></div>
+      <div class="f1lane"><span class="f1car" id="f1car">${F1CAR}</span></div>${rows}`;
+  }
+  function paintCard() {
+    const w = TV.f1.weekend, all = lastFeed ? lastFeed.card || lastFeed.list || [] : [];
+    if (!w) tab = 'foot';
+    else if (!all.length) tab = 'f1';               // no football today: the F1 tab is all there is
+    let html;
+    if (tab === 'f1') html = tabs('') + f1html(w);
+    else {
+      const list = all.slice(0, w ? 8 : 10);         // the tab row takes a little room
+      html = list.length ? tabs(all.length > list.length ? `+${all.length - list.length} more` : '') + list.map(m => mrow(m)).join('') : '';
+    }
+    $('matches').toggleAttribute('data-cycle', !!(w && all.length));
+    if (html === mHtml) return;                      // nothing changed: no repaint
+    const showCar = tab === 'f1' && !mHtml.includes('f1car');
     mHtml = html;
     $('mcore').innerHTML = html;
-    $('matches').classList.toggle('empty', !list.length);
+    $('matches').classList.toggle('empty', !html);
+    if (showCar) driveBy();
     if (mLayer && mLayer.classList.contains('open')) renderPanel();
   }
+  // the F1 car crosses the card once (about 1.6 s), then everything is still again
+  function driveBy() {
+    const car = $('f1car'); if (!car || !car.animate) return;
+    car.animate([{ transform: 'translateX(-170px)', opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .82 }, { transform: 'translateX(600px)', opacity: 0 }],
+      { duration: 1600, easing: 'cubic-bezier(.45,.05,.2,1)' });
+  }
+  function paintMatches(feed) { lastFeed = feed; paintCard(); }
+  $('matches').addEventListener('cycle', () => { tab = tab === 'f1' ? 'foot' : 'f1'; userTabAt = Date.now(); paintCard(); });
+  document.addEventListener('tv:f1', () => {
+    // a session going live brings the F1 tab forward, unless you switched tabs in the last 10 minutes
+    if (TV.f1.live && Date.now() - userTabAt > 10 * 60e3) tab = 'f1';
+    paintCard();
+  });
 
   // full list: built when opened, emptied when closed (holds no memory while hidden)
   let mLayer = null, mOff = 0, mReturn = null;
@@ -555,10 +626,11 @@ body.serif .settings-title { font-weight: 400; }
     setTimeout(() => { if (!mLayer.classList.contains('open')) $('mlist').innerHTML = ''; }, 400);
     TV.remote.reset(); TV.remote.focus(mReturn);
   }
-  $('matches').addEventListener('click', openPanel);
+  $('matches').addEventListener('click', () => { if (tab === 'foot') openPanel(); else driveBy(); });
   document.addEventListener('tv:matches', e => paintMatches(e.detail));
   paintMatches(TV.matches.feed); // last known matches right away, then fresh data
   TV.matches.start();
+  TV.f1.start();
 
   TV.start({ onTimes, onTick });
   TV.sky.start($('sky'), { scene: 'dunes', photoHost: $('photos') });

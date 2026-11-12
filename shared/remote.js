@@ -66,7 +66,12 @@ window.TV = window.TV || {};
       if (dir === 'down')  { if (b.top < a.bottom - 4 && dy <= 4) continue; main = dy; cross = dx; }
       if (dir === 'up')    { if (b.bottom > a.top + 4 && dy >= -4) continue; main = -dy; cross = dx; }
       if (main <= 0) continue;
-      const score = main + Math.abs(cross) * 2.2;
+      // edge-to-edge: the gap in the direction of travel, plus how far off to the side it is (0 when they line up).
+      // Centers alone misjudge tall elements like the matches card.
+      const vert = dir === 'up' || dir === 'down';
+      const gap = Math.max(0, dir === 'up' ? a.top - b.bottom : dir === 'down' ? b.top - a.bottom : dir === 'left' ? a.left - b.right : b.left - a.right);
+      const side = vert ? Math.max(0, Math.max(a.left, b.left) - Math.min(a.right, b.right)) : Math.max(0, Math.max(a.top, b.top) - Math.min(a.bottom, b.bottom));
+      const score = gap + side * 2.2 + Math.abs(cross) * .1;
       if (score < bestScore) { bestScore = score; best = el; }
     }
     if (!best) return bump(dir);

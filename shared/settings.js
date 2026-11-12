@@ -44,8 +44,8 @@ window.TV = window.TV || {};
     ] },
     { id: 'matches', name: 'Matches', icon: 'ball', rows: () => [
       opt('Matches card', 'matches', BOOL, onOff, () => TV.matches.refresh()),
-      ...TV.matches.COMPS.map(c => ({ label: c.name, opts: BOOL, get: () => (S().matchComps || {})[c.id] !== false,
-        set: v => { S().matchComps = { ...(S().matchComps || {}), [c.id]: v }; clearTimeout(mt); mt = setTimeout(() => TV.matches.refresh(true), 800); }, show: onOff })),
+      ...[...TV.matches.COMPS.filter(c => !c.nt), { id: 'nt', name: 'National teams' }, { id: 'f1', name: 'Formula 1 (race weekends)' }].map(c => ({ label: c.name, opts: BOOL, get: () => (S().matchComps || {})[c.id] !== false,
+        set: v => { S().matchComps = { ...(S().matchComps || {}), [c.id]: v }; clearTimeout(mt); mt = setTimeout(() => { TV.matches.refresh(true); TV.f1 && TV.f1.refresh(); }, 800); }, show: onOff })),
     ] },
     { id: 'prayer', name: 'Prayer times', icon: 'book', rows: () => [
       // your mosque's timetable (Mawaqit); set once with: adb shell am start -n com.horizon.launcher/.MainActivity --es mosque <slug>

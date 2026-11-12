@@ -17,12 +17,24 @@ window.TV = window.TV || {};
     { id: 'll',   tag: 'LL',   name: 'LaLiga', code: 'esp.1' },
     { id: 'sa',   tag: 'SA',   name: 'Serie A', code: 'ita.1' },
     { id: 'l1',   tag: 'L1',   name: 'Ligue 1', code: 'fra.1' },
+    // national teams (one switch in Settings: "National teams")
+    { id: 'wc',   tag: 'WC',   name: 'World Cup', code: 'fifa.world', nt: true },
+    { id: 'euro', tag: 'EURO', name: 'EURO', code: 'uefa.euro', nt: true },
+    { id: 'unl',  tag: 'UNL',  name: 'Nations League', code: 'uefa.nations', nt: true },
+    { id: 'afcon', tag: 'AFCON', name: 'Africa Cup of Nations', code: 'caf.nations', nt: true },
+    { id: 'ca',   tag: 'CA',   name: 'Copa América', code: 'conmebol.america', nt: true },
+    { id: 'wcqe', tag: 'WCQ',  name: 'World Cup qualifiers · Europe', code: 'fifa.worldq.uefa', nt: true },
+    { id: 'wcqa', tag: 'WCQ',  name: 'World Cup qualifiers · Africa', code: 'fifa.worldq.caf', nt: true },
+    { id: 'wcqs', tag: 'WCQ',  name: 'World Cup qualifiers · South America', code: 'fifa.worldq.conmebol', nt: true },
+    { id: 'euq',  tag: 'EUQ',  name: 'EURO qualifiers', code: 'uefa.euroq', nt: true },
+    { id: 'afq',  tag: 'AFQ',  name: 'AFCON qualifiers', code: 'caf.nations_qual', nt: true },
+    { id: 'fri',  tag: 'FRI',  name: 'International friendlies', code: 'fifa.friendly', nt: true },
   ];
   const RANK = Object.fromEntries(COMPS.map((c, i) => [c.id, i]));
   const FAV_TEAMS = COMPS.filter(c => c.fav);
   // a team schedule lists every competition: file each game under its own (Real Madrid in LaLiga stays in LaLiga)
   const LEAGUE = n => /conference/i.test(n) ? 'uecl' : /europa/i.test(n) ? 'uel' : /champions/i.test(n) ? 'ucl' : /laliga|la liga/i.test(n) ? 'll' : null;
-  const on = c => TV.settings.matches !== false && (TV.settings.matchComps || {})[c.id] !== false;
+  const on = c => TV.settings.matches !== false && (TV.settings.matchComps || {})[c.nt ? 'nt' : c.id] !== false;
 
   const pad = n => String(n).padStart(2, '0');
   const dayOf = off => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + off); return d; };
@@ -92,19 +104,34 @@ window.TV = window.TV || {};
   }
 
   const cache = new Map(); // day key → { at, list }
+  // each competition has its own clock: live or about to start → 1 min; games that day → 15 min (30 for other days);
+  // nothing that day → 3 h. So 20 competitions cost about as much as a handful, and an empty day costs almost nothing.
+  const compCache = new Map(); // `${comp}|${day}` → { at, list }
+  const ttlOf = (list, off) => {
+    const now = Date.now();
+    if (list.some(m => m.state === 'live' || (m.state === 'pre' && m.start - now < 10 * 60e3 && m.start - now > -3 * 3600e3))) return 55e3;
+    return list.length ? (off === 0 ? 15 * 60e3 : 30 * 60e3) : 3 * 3600e3;
+  };
+  async function compDay(c, d, k, off, force) {
+    const ck = c.id + '|' + k, hit = compCache.get(ck);
+    if (hit && !force && Date.now() - hit.at < ttlOf(hit.list, off)) return hit.list;
+    const list = c.sdb ? ((await get(`${SDB}eventsday.php?d=${iso(d)}&l=${c.sdb}`)).events || []).map(e => slimSdb(e, c))
+      : ((await get(`${API}${c.code}/scoreboard?dates=${k}`)).events || []).map(e => slim(e, c));
+    compCache.set(ck, { at: Date.now(), list });
+    if (compCache.size > 160) compCache.delete(compCache.keys().next().value);
+    return list;
+  }
+
   async function load(off, force) {
     const d = dayOf(off), k = key(d);
-    const hit = cache.get(k), live = hit && hit.list.some(m => m.state === 'live');
-    const ttl = live ? 55e3 : off === 0 ? 15 * 60e3 : 30 * 60e3;
-    if (hit && !force && Date.now() - hit.at < ttl) return hit.list;
+    const hit = cache.get(k);
+    if (hit && !force && Date.now() - hit.at < 20e3) return hit.list; // the panel and the card asking at the same moment
     const list = [];
     const order = [...COMPS.filter(c => !c.team), ...COMPS.filter(c => c.team)]; // scoreboards first: they carry the live score
     for (const c of order) {            // one after another: never a burst of requests on the TV
       if (!on(c)) continue;
       try {
-        const evs = c.team ? await team(c)
-          : c.sdb ? ((await get(`${SDB}eventsday.php?d=${iso(d)}&l=${c.sdb}`)).events || []).map(e => slimSdb(e, c))
-          : ((await get(`${API}${c.code}/scoreboard?dates=${k}`)).events || []).map(e => slim(e, c));
+        const evs = c.team ? await team(c) : await compDay(c, d, k, off, force);
         for (const m of evs) if (m && key(new Date(m.start)) === k && !list.some(x => x.id === m.id)) list.push(m);
       } catch (e) { /* this competition is unavailable right now: show the others */ }
     }
