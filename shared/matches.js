@@ -69,11 +69,12 @@ window.TV = window.TV || {};
     const side = x => ({ id: String(x.team.id), n: x.team.displayName || x.team.name || '', code: x.team.abbreviation || (x.team.shortDisplayName || '').slice(0, 3).toUpperCase(),
       logo: crest(x.team.logo || (x.team.logos && x.team.logos[0] && x.team.logos[0].href)), s: score(x.score) });
     let state = type.state === 'in' ? 'live' : type.state === 'post' ? 'post' : 'pre', min = '';
-    if (state === 'live') min = /HALF/.test(type.name || '') ? 'HT' : (status.displayClock || "'");
+    if (state === 'live') min = /HALFTIME/.test(type.name || '') ? 'HT' : /END_OF_REGULATION|END_OF_EXTRATIME/.test(type.name || '') ? 'BRK'
+      : /SHOOTOUT|PENALT/.test(type.name || '') ? 'PENS' : (status.displayClock || '');
     if (/POSTPONED|CANCELED|SUSPENDED/.test(type.name || '')) { state = 'off'; min = 'PPD'; }
     let cid = comp.id;
     if (comp.id === 'rma') { const lg = e.league || (e.competitions[0].league) || {}; cid = LEAGUE(lg.abbreviation || lg.name || '') || 'rma'; }
-    const m = { id: e.id, comp: cid, start: Date.parse(e.date), state, min, h: side(h), a: side(a) };
+    const m = { id: e.id, comp: cid, start: Date.parse(e.date), state, min, at: Date.now(), period: status.period || 0, h: side(h), a: side(a) };
     m.fav = comp.fav || FAV_TEAMS.some(f => m.h.id === String(f.team) || m.a.id === String(f.team));
     m.prio = prio(m);
     return m;
@@ -93,10 +94,10 @@ window.TV = window.TV || {};
   function slimSdb(e, comp) {
     const st = e.strStatus || 'NS';
     let state = /^(FT|AET|PEN|AP)$/.test(st) ? 'post' : /^(1H|2H|HT|ET|BT|P|LIVE|INT)$/.test(st) ? 'live' : /PST|CANC|ABD|SUSP/.test(st) ? 'off' : 'pre';
-    const min = state === 'live' ? (st === 'HT' ? 'HT' : e.strProgress ? e.strProgress + "'" : st) : state === 'off' ? 'PPD' : '';
+    const min = state === 'live' ? (st === 'HT' ? 'HT' : e.strProgress ? String(e.strProgress).replace(/'+$/, '') + "'" : '') : state === 'off' ? 'PPD' : '';
     const side = (name, id, badge, sc) => ({ id: 'sdb' + id, n: name || '', code: short(name || ''), logo: badge ? badge + '/tiny' : '', s: sc == null ? '' : String(sc) });
     const ts = e.strTimestamp ? Date.parse(e.strTimestamp.replace(/(\+00:00)?$/, 'Z')) : Date.parse(`${e.dateEvent}T${e.strTime || '00:00:00'}Z`);
-    return withPrio({ id: 'sdb' + e.idEvent, comp: comp.id, start: ts, state, min, fav: false,
+    return withPrio({ id: 'sdb' + e.idEvent, comp: comp.id, start: ts, state, min, at: Date.now(), half: st, fav: false,
       h: side(e.strHomeTeam, e.idHomeTeam, e.strHomeTeamBadge, e.intHomeScore), a: side(e.strAwayTeam, e.idAwayTeam, e.strAwayTeamBadge, e.intAwayScore) });
   }
   const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -156,6 +157,30 @@ window.TV = window.TV || {};
     return list;
   }
 
+  /* ---------- the exact minute of a live game, counted on between data refreshes ----------
+     Reads "52'" or "45'+2'" from the last refresh and adds the minutes since; at the end of a half it moves into
+     stoppage time (45'+1', 90'+3'…) instead of running past 45 / 90. Botola often gives only the half: then the
+     minute comes from the kick-off time (15 min half-time break). */
+  const ENDS = [45, 90, 105, 120];
+  function minute(m) {
+    if (m.state !== 'live') return '';
+    if (m.min === 'HT' || m.min === 'BRK' || m.min === 'PENS') return m.min === 'BRK' ? 'Break' : m.min === 'PENS' ? 'Pens' : 'HT';
+    const since = Math.max(0, Math.floor((Date.now() - (m.at || Date.now())) / 60000));
+    let base = 0, extra = -1, end = 0;
+    const mm = String(m.min || '').match(/^(\d+)'?(?:\s*\+\s*(\d+))?/);
+    if (mm) { base = +mm[1]; if (mm[2] != null) extra = +mm[2]; }
+    else if (m.half) {                                   // only "1H" / "2H": estimate from the kick-off
+      const run = Math.floor((Date.now() - m.start) / 60000) + 1;
+      base = m.half === '2H' ? Math.max(46, run - 15) : m.half === 'ET' ? Math.max(91, run - 20) : Math.max(1, run);
+      return fmtMin(base, m.half === '2H' ? 90 : m.half === 'ET' ? 120 : 45);
+    } else return 'Live';
+    if (extra >= 0) return `${base}'+${extra + since}'`;        // already in stoppage time
+    end = ENDS.find(x => x >= base) || 120;
+    if (m.period) end = ENDS[Math.min(ENDS.length, m.period) - 1] || end;
+    return fmtMin(base + since, end);
+  }
+  const fmtMin = (n, end) => n > end ? `${end}'+${n - end}'` : `${n}'`;
+
   const label = off => off === 0 ? 'Today' : off === 1 ? 'Tomorrow' : off === -1 ? 'Yesterday'
     : dayOf(off).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
 
@@ -185,7 +210,7 @@ window.TV = window.TV || {};
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 
   TV.matches = {
-    COMPS, load, label, refresh,
+    COMPS, load, label, refresh, minute,
     // the saved feed from last time, but only if it is still today's
     get feed() { return current && current.day === key(dayOf(0)) ? current : null; },
     start() { setTimeout(refresh, 2500); }, // after the home screen has settled

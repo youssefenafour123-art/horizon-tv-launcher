@@ -54,7 +54,7 @@ body.athan-on .ui { opacity: 0; }
 .matches.empty, body.no-matches .matches { display: none; }
 .mhead { display: flex; justify-content: space-between; align-items: center; height: 28px; margin-bottom: 6px; }
 .mhead .mmore { font-size: 15px; color: var(--ink-3); letter-spacing: .04em; }
-.mrow { display: grid; grid-template-columns: 70px 1fr 74px 1fr 60px; align-items: center; height: 38px; font-size: 22px; font-variant-numeric: tabular-nums; }
+.mrow { display: grid; grid-template-columns: 86px 1fr 74px 1fr 56px; align-items: center; height: 38px; font-size: 22px; font-variant-numeric: tabular-nums; }
 .mrow .t { font-size: 17px; color: var(--ink-2); letter-spacing: .02em; }
 .mrow .t.live { color: #ff7a7a; font-weight: 600; }
 .mrow .t.live::before { content: ''; display: inline-block; width: 7px; height: 7px; margin: 0 7px 2px 0; border-radius: 50%; background: #ff5a5a; box-shadow: 0 0 8px #ff5a5a; vertical-align: middle; }
@@ -115,7 +115,7 @@ body.serif .mtitle { font-weight: 400; }
 .mgroup { margin-bottom: 26px; }
 .mgroup h3 { display: flex; align-items: center; gap: 14px; margin: 0 0 6px; font-size: 15px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-2); }
 .mgroup h3 span { font-size: 13px; letter-spacing: .12em; padding: 4px 10px; border-radius: 8px; background: rgba(255,255,255,.1); color: var(--ink); }
-.mlist .mrow { grid-template-columns: 84px 1fr 84px 1fr; height: 48px; font-size: 23px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.mlist .mrow { grid-template-columns: 100px 1fr 84px 1fr; height: 48px; font-size: 23px; border-bottom: 1px solid rgba(255,255,255,.05); }
 .mlist .mrow img { width: 32px; height: 32px; }
 .mempty { margin: 80px auto; font-size: 24px; color: var(--ink-3); }
 .mfoot { margin-top: 14px; font-size: 15px; color: var(--ink-3); }
@@ -518,7 +518,7 @@ body.serif .settings-title { font-weight: 400; }
   function mrow(m, wide) {
     const c = TV.matches.comp(m.comp) || { tag: '' };
     const t = m.next ? `<span class="t">${new Date(m.start).toLocaleDateString('en-GB', { weekday: 'short' })}</span>`
-      : m.state === 'live' ? `<span class="t live">${esc(m.min)}</span>` : m.state === 'post' ? '<span class="t">FT</span>'
+      : m.state === 'live' ? `<span class="t live">${esc(TV.matches.minute(m))}</span>` : m.state === 'post' ? '<span class="t">FT</span>'
       : m.state === 'off' ? '<span class="t">PPD</span>' : `<span class="t">${TV.fmt.time(new Date(m.start))}</span>`;
     const sc = m.next ? TV.fmt.time(new Date(m.start)) : m.state === 'pre' || m.state === 'off' ? '–' : `${esc(m.h.s)}–${esc(m.a.s)}`;
     const img = x => x.logo ? `<img src="${esc(x.logo)}" alt="">` : '';
@@ -569,6 +569,10 @@ body.serif .settings-title { font-weight: 400; }
       { duration: 1600, easing: 'cubic-bezier(.45,.05,.2,1)' });
   }
   function paintMatches(feed) { lastFeed = feed; paintCard(); }
+  setInterval(() => {
+    if (document.hidden || !lastFeed || !(lastFeed.card || lastFeed.list || []).some(m => m.state === 'live')) return;
+    paintCard();
+  }, 15000);
   $('matches').addEventListener('cycle', () => { tab = tab === 'f1' ? 'foot' : 'f1'; userTabAt = Date.now(); paintCard(); });
   document.addEventListener('tv:f1', () => {
     // a session going live brings the F1 tab forward, unless you switched tabs in the last 10 minutes
@@ -608,7 +612,7 @@ body.serif .settings-title { font-weight: 400; }
     for (const g of groups) { const i = h[0] <= h[1] ? 0 : 1; cols[i].push(g); h[i] += g[1].length + 1.5; }
     $('mlist').innerHTML = cols.map(col => `<div class="mcol">${col.map(([c, ms]) =>
       `<div class="mgroup"><h3><span>${c.tag}</span>${c.name}</h3>${ms.map(m => mrow(m, true)).join('')}</div>`).join('')}</div>`).join('');
-    $('mlist').scrollTop = 0;
+    if (mLayer.dataset.off !== String(off)) { $('mlist').scrollTop = 0; mLayer.dataset.off = off; }
   }
   function openPanel() {
     if (!mLayer) buildPanel();
