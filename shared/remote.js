@@ -149,6 +149,7 @@ window.TV = window.TV || {};
     if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'GoBack') {
       const top = scope();
       if (top.classList.contains('layer')) { e.preventDefault(); top.dispatchEvent(new Event('close')); }
+      else { e.preventDefault(); clearTimeout(idleTimer); document.body.classList.add('idle'); } // Back on the home screen: ambient mode now (any key wakes it)
       return;
     }
     if (e.key === 'a' || e.key === 'A') TV.athan && TV.athan.simulate();
