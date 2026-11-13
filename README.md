@@ -111,7 +111,7 @@ Sound always plays. To also see the athan card while another app is open, go to 
 | ◀ ▶ ▲ ▼ | Move around |
 | OK | Open the app |
 | Hold OK on an app | Move mode: ◀ ▶ moves it, ▲ puts it first, OK or Back drops it |
-| Back | Close a panel (Back never leaves the home screen) |
+| Back | Close a panel; on the home screen, go straight to ambient mode (any key wakes it) |
 | Home | Return to Horizon and jump to the first app |
 | ⚙ (top right) or the **Settings** card | Settings |
 
