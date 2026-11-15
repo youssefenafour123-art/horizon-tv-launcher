@@ -10,8 +10,8 @@ android {
         applicationId = "com.horizon.launcher"
         minSdk = 24
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.7"
+        versionCode = 9
+        versionName = "1.8"
     }
 
     buildTypes {

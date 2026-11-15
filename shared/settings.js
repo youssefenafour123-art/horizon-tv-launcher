@@ -49,6 +49,7 @@ window.TV = window.TV || {};
         { label: 'Athan over other apps', action: () => window.Horizon.requestOverlay(), show: () => window.Horizon.canOverlay() ? 'Allowed' : 'Press OK to allow' },
         { label: 'Android TV settings', action: () => window.Horizon.openTvSettings(), show: () => 'Press OK' },
       ] : []),
+      { label: 'Horizon version', action: () => { }, show: () => (window.Horizon && window.Horizon.version ? window.Horizon.version() : 'web preview') },
     ] },
     { id: 'matches', name: 'Matches', icon: 'ball', rows: () => [
       opt('Matches card', 'matches', BOOL, onOff, () => TV.matches.refresh()),

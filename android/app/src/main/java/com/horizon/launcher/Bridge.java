@@ -46,5 +46,7 @@ final class Bridge {
         AthanService.start(act, key, name, ar, time, city);
     }
 
-    @JavascriptInterface public String version() { return "1.0"; }
+    @JavascriptInterface public String version() {
+        try { return act.getPackageManager().getPackageInfo(act.getPackageName(), 0).versionName; } catch (Exception e) { return "?"; }
+    }
 }
