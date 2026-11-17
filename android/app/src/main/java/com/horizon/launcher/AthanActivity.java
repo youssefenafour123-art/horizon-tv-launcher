@@ -45,10 +45,10 @@ public class AthanActivity extends Activity {
         col.setOrientation(LinearLayout.VERTICAL);
         col.setGravity(Gravity.CENTER_HORIZONTAL);
 
-        col.addView(text("حان الآن موعد أذان", 18, 0xBFFFFFFF, Typeface.NORMAL));
-        col.addView(text(getIntent().getStringExtra("ar"), 96, 0xFFFFFFFF, Typeface.BOLD));
-        col.addView(text("It's time for " + getIntent().getStringExtra("n"), 26, 0xFFFFFFFF, Typeface.NORMAL));
-        col.addView(text(getIntent().getStringExtra("time") + "  ·  " + getIntent().getStringExtra("city"), 15, 0xBFFFFFFF, Typeface.NORMAL));
+        col.addView(text("حان الآن موعد أذان", 18, 0xBFFFFFFF, Typeface.NORMAL), FULL);
+        col.addView(text(getIntent().getStringExtra("ar"), 96, 0xFFFFFFFF, Typeface.BOLD), FULL);
+        col.addView(text("It's time for " + getIntent().getStringExtra("n"), 26, 0xFFFFFFFF, Typeface.NORMAL), FULL);
+        col.addView(text(getIntent().getStringExtra("time") + "  ·  " + getIntent().getStringExtra("city"), 15, 0xBFFFFFFF, Typeface.NORMAL), FULL);
 
         FrameLayout track = new FrameLayout(this);
         GradientDrawable tr = new GradientDrawable(); tr.setColor(0x29FFFFFF); tr.setCornerRadius(dp(2));
@@ -62,7 +62,8 @@ public class AthanActivity extends Activity {
         tp.topMargin = dp(28);
         col.addView(track, tp);
 
-        root.addView(col, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        // full width: a wrap-content column measured the 96sp Arabic a hair too narrow, so its last letter wrapped onto a hidden line (المغرب lost its ب)
+        root.addView(col, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
 
         TextView hint = text("PRESS ANY BUTTON TO STOP", 11, 0x80FFFFFF, Typeface.NORMAL);
         hint.setLetterSpacing(0.24f);
@@ -84,6 +85,8 @@ public class AthanActivity extends Activity {
         });
     }
 
+    private static final LinearLayout.LayoutParams FULL = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
     private TextView text(String s, int sp, int color, int style) {
         TextView t = new TextView(this);
         t.setText(s == null ? "" : s);
@@ -91,7 +94,7 @@ public class AthanActivity extends Activity {
         t.setTextColor(color);
         t.setTypeface(Typeface.create("sans-serif-light", style));
         t.setGravity(Gravity.CENTER);
-        t.setPadding(0, dp(2), 0, dp(2));
+        t.setPadding(dp(24), dp(2), dp(24), dp(2));
         return t;
     }
 
